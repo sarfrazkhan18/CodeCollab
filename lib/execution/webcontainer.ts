@@ -1,8 +1,20 @@
-import { WebContainer, FileSystemTree } from '@webcontainer/api';
+// Conditional import for WebContainer to avoid build errors
+let WebContainer: any = null;
+let FileSystemTree: any = null;
+
+if (typeof window !== 'undefined') {
+  try {
+    const webcontainerModule = require('@webcontainer/api');
+    WebContainer = webcontainerModule.WebContainer;
+    FileSystemTree = webcontainerModule.FileSystemTree;
+  } catch (error) {
+    console.warn('WebContainer not available:', error);
+  }
+}
 
 export class WebContainerService {
   private static instance: WebContainerService;
-  private webcontainer: WebContainer | null = null;
+  private webcontainer: any = null;
   private isBooting = false;
   private serverProcess: any = null;
   private serverUrl: string | null = null;
@@ -21,8 +33,8 @@ export class WebContainerService {
 
   private async checkAvailability(): Promise<void> {
     try {
-      // Check if WebContainer is available in this environment
-      if (typeof window !== 'undefined' && 'SharedArrayBuffer' in window) {
+      // Check if we're in browser environment and WebContainer is available
+      if (typeof window !== 'undefined' && WebContainer && 'SharedArrayBuffer' in window) {
         this.isAvailable = true;
       } else {
         console.warn('WebContainer not available in this environment');
@@ -34,8 +46,8 @@ export class WebContainerService {
     }
   }
 
-  async initialize(): Promise<WebContainer | null> {
-    if (!this.isAvailable) {
+  async initialize(): Promise<any> {
+    if (!this.isAvailable || !WebContainer) {
       throw new Error('WebContainer is not available in this environment');
     }
 
@@ -78,8 +90,8 @@ export class WebContainerService {
     await container.mount(fileSystemTree);
   }
 
-  private transformToFileSystemTree(files: Record<string, string>): FileSystemTree {
-    const tree: FileSystemTree = {};
+  private transformToFileSystemTree(files: Record<string, string>): any {
+    const tree: any = {};
 
     for (const [filePath, content] of Object.entries(files)) {
       const pathParts = filePath.split('/').filter(part => part !== '');
@@ -93,7 +105,7 @@ export class WebContainerService {
             directory: {}
           };
         }
-        current = current[dirName].directory!;
+        current = current[dirName].directory;
       }
 
       // Add the file
@@ -145,13 +157,15 @@ export class WebContainerService {
         reject(new Error('Dependency installation timeout'));
       }, 60000); // 1 minute timeout
 
-      installProcess.output.pipeTo(new WritableStream({
-        write(data) {
-          console.log('npm install:', data);
-        }
-      }));
+      if (installProcess.output && installProcess.output.pipeTo) {
+        installProcess.output.pipeTo(new WritableStream({
+          write(data: string) {
+            console.log('npm install:', data);
+          }
+        }));
+      }
 
-      installProcess.exit.then((code) => {
+      installProcess.exit.then((code: number) => {
         clearTimeout(timeout);
         if (code === 0) {
           resolve();
@@ -189,26 +203,30 @@ export class WebContainerService {
           reject(new Error('Server startup timeout'));
         }, 30000); // 30 second timeout
 
-        container.on('server-ready', (port: number, url: string) => {
-          clearTimeout(timeout);
-          this.serverUrl = url;
-          console.log(`Development server ready at ${url}`);
-          resolve(url);
-        });
+        if (container.on) {
+          container.on('server-ready', (port: number, url: string) => {
+            clearTimeout(timeout);
+            this.serverUrl = url;
+            console.log(`Development server ready at ${url}`);
+            resolve(url);
+          });
+        }
 
         // Listen for process output to detect when server is ready
-        this.serverProcess.output.pipeTo(new WritableStream({
-          write(data) {
-            console.log('Server output:', data);
-            // Look for Next.js ready message
-            if (data.includes('Ready') || data.includes('localhost:3000')) {
-              clearTimeout(timeout);
-              const url = 'http://localhost:3000';
-              this.serverUrl = url;
-              resolve(url);
+        if (this.serverProcess.output && this.serverProcess.output.pipeTo) {
+          this.serverProcess.output.pipeTo(new WritableStream({
+            write(data: string) {
+              console.log('Server output:', data);
+              // Look for Next.js ready message
+              if (data.includes('Ready') || data.includes('localhost:3000')) {
+                clearTimeout(timeout);
+                const url = 'http://localhost:3000';
+                this.serverUrl = url;
+                resolve(url);
+              }
             }
-          }
-        }));
+          }));
+        }
 
         // Handle process exit
         this.serverProcess.exit.then((code: number) => {
@@ -247,17 +265,19 @@ export class WebContainerService {
     
     let output = '';
     
-    process.output.pipeTo(new WritableStream({
-      write(data) {
-        output += data;
-      }
-    }));
+    if (process.output && process.output.pipeTo) {
+      process.output.pipeTo(new WritableStream({
+        write(data: string) {
+          output += data;
+        }
+      }));
+    }
 
     const exitCode = await process.exit;
     return { output, exitCode };
   }
 
-  getContainer(): WebContainer | null {
+  getContainer(): any {
     return this.webcontainer;
   }
 

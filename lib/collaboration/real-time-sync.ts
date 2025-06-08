@@ -1,6 +1,21 @@
-import { WebsocketProvider } from 'y-websocket';
-import * as Y from 'yjs';
-import { awareness } from 'y-protocols/awareness';
+// Conditional imports to avoid build errors
+let WebsocketProvider: any = null;
+let Y: any = null;
+let awareness: any = null;
+
+if (typeof window !== 'undefined') {
+  try {
+    const yWebsocket = require('y-websocket');
+    const yjs = require('yjs');
+    const yProtocols = require('y-protocols/awareness');
+    
+    WebsocketProvider = yWebsocket.WebsocketProvider;
+    Y = yjs;
+    awareness = yProtocols.awareness;
+  } catch (error) {
+    console.warn('Collaboration dependencies not available:', error);
+  }
+}
 
 export interface CollaborationEvent {
   type: 'cursor' | 'selection' | 'edit' | 'presence' | 'comment';
@@ -34,16 +49,18 @@ export interface Comment {
 
 export class RealTimeSync {
   private static instance: RealTimeSync;
-  private doc: Y.Doc;
-  private provider: WebsocketProvider | null = null;
-  private awareness: awareness.Awareness | null = null;
+  private doc: any;
+  private provider: any = null;
+  private awareness: any = null;
   private eventListeners: Map<string, Function[]> = new Map();
   private cursors: Map<string, UserCursor> = new Map();
   private comments: Map<string, Comment> = new Map();
   private isConnected: boolean = false;
 
   private constructor() {
-    this.doc = new Y.Doc();
+    if (Y) {
+      this.doc = new Y.Doc();
+    }
   }
 
   static getInstance(): RealTimeSync {
@@ -55,6 +72,13 @@ export class RealTimeSync {
 
   async connect(projectId: string, userId: string, userName: string): Promise<void> {
     try {
+      // Check if collaboration dependencies are available
+      if (!WebsocketProvider || !Y || !awareness) {
+        console.warn('Collaboration dependencies not available. Running in offline mode.');
+        this.simulateOfflineMode(userId, userName);
+        return;
+      }
+
       // Check if WebSocket URL is configured
       const wsUrl = process.env.NEXT_PUBLIC_COLLABORATION_WS_URL;
       if (!wsUrl) {
@@ -136,14 +160,19 @@ export class RealTimeSync {
   }
 
   // File synchronization
-  getSharedText(filePath: string): Y.Text {
+  getSharedText(filePath: string): any {
+    if (!this.doc) return null;
     return this.doc.getText(filePath);
   }
 
   updateFile(filePath: string, content: string): void {
+    if (!this.doc) return;
+    
     const ytext = this.getSharedText(filePath);
-    ytext.delete(0, ytext.length);
-    ytext.insert(0, content);
+    if (ytext) {
+      ytext.delete(0, ytext.length);
+      ytext.insert(0, content);
+    }
   }
 
   // Cursor and selection tracking
@@ -196,7 +225,7 @@ export class RealTimeSync {
     this.comments.set(comment.id, comment);
     
     // Sync comment to other users if connected
-    if (this.isConnected) {
+    if (this.isConnected && this.doc) {
       const commentsMap = this.doc.getMap('comments');
       commentsMap.set(comment.id, comment);
     }
@@ -226,7 +255,7 @@ export class RealTimeSync {
     parentComment.replies.push(reply);
     
     // Update in shared document if connected
-    if (this.isConnected) {
+    if (this.isConnected && this.doc) {
       const commentsMap = this.doc.getMap('comments');
       commentsMap.set(commentId, parentComment);
     }
@@ -241,7 +270,7 @@ export class RealTimeSync {
       comment.resolved = true;
       
       // Update in shared document if connected
-      if (this.isConnected) {
+      if (this.isConnected && this.doc) {
         const commentsMap = this.doc.getMap('comments');
         commentsMap.set(commentId, comment);
       }
@@ -284,8 +313,10 @@ export class RealTimeSync {
 
   // Private methods
   private handleAwarenessChange({ added, updated, removed }: any): void {
+    if (!this.awareness) return;
+
     [...added, ...updated].forEach((clientId: number) => {
-      const state = this.awareness!.getStates().get(clientId);
+      const state = this.awareness.getStates().get(clientId);
       if (state && state.user) {
         const cursor: UserCursor = {
           userId: state.user.id,

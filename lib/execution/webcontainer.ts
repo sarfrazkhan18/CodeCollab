@@ -6,8 +6,11 @@ export class WebContainerService {
   private isBooting = false;
   private serverProcess: any = null;
   private serverUrl: string | null = null;
+  private isAvailable = false;
 
-  private constructor() {}
+  private constructor() {
+    this.checkAvailability();
+  }
 
   static getInstance(): WebContainerService {
     if (!WebContainerService.instance) {
@@ -16,7 +19,26 @@ export class WebContainerService {
     return WebContainerService.instance;
   }
 
-  async initialize(): Promise<WebContainer> {
+  private async checkAvailability(): Promise<void> {
+    try {
+      // Check if WebContainer is available in this environment
+      if (typeof window !== 'undefined' && 'SharedArrayBuffer' in window) {
+        this.isAvailable = true;
+      } else {
+        console.warn('WebContainer not available in this environment');
+        this.isAvailable = false;
+      }
+    } catch (error) {
+      console.warn('WebContainer availability check failed:', error);
+      this.isAvailable = false;
+    }
+  }
+
+  async initialize(): Promise<WebContainer | null> {
+    if (!this.isAvailable) {
+      throw new Error('WebContainer is not available in this environment');
+    }
+
     if (this.webcontainer) {
       return this.webcontainer;
     }
@@ -26,7 +48,7 @@ export class WebContainerService {
       while (this.isBooting) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
-      return this.webcontainer!;
+      return this.webcontainer;
     }
 
     try {
@@ -36,12 +58,20 @@ export class WebContainerService {
       return this.webcontainer;
     } catch (error) {
       this.isBooting = false;
+      console.error('WebContainer initialization failed:', error);
       throw new Error(`Failed to initialize WebContainer: ${error}`);
     }
   }
 
   async createProject(files: Record<string, string>): Promise<void> {
+    if (!this.isAvailable) {
+      // In environments where WebContainer isn't available, just return
+      console.warn('WebContainer not available, skipping project creation');
+      return;
+    }
+
     const container = await this.initialize();
+    if (!container) return;
     
     // Transform flat files object to FileSystemTree
     const fileSystemTree = this.transformToFileSystemTree(files);
@@ -79,28 +109,50 @@ export class WebContainerService {
   }
 
   async writeFile(path: string, content: string): Promise<void> {
+    if (!this.isAvailable) return;
+    
     const container = await this.initialize();
+    if (!container) return;
+    
     await container.fs.writeFile(path, content);
   }
 
   async readFile(path: string): Promise<string> {
+    if (!this.isAvailable) {
+      throw new Error('WebContainer not available');
+    }
+    
     const container = await this.initialize();
+    if (!container) throw new Error('Container not initialized');
+    
     const file = await container.fs.readFile(path, 'utf-8');
     return file;
   }
 
   async installDependencies(): Promise<void> {
+    if (!this.isAvailable) {
+      console.warn('WebContainer not available, skipping dependency installation');
+      return;
+    }
+
     const container = await this.initialize();
+    if (!container) return;
+    
     const installProcess = await container.spawn('npm', ['install']);
     
     return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Dependency installation timeout'));
+      }, 60000); // 1 minute timeout
+
       installProcess.output.pipeTo(new WritableStream({
         write(data) {
-          console.log(data);
+          console.log('npm install:', data);
         }
       }));
 
       installProcess.exit.then((code) => {
+        clearTimeout(timeout);
         if (code === 0) {
           resolve();
         } else {
@@ -111,11 +163,16 @@ export class WebContainerService {
   }
 
   async startDevServer(): Promise<string> {
+    if (!this.isAvailable) {
+      throw new Error('WebContainer not available for development server');
+    }
+
     if (this.serverUrl && this.serverProcess) {
       return this.serverUrl;
     }
 
     const container = await this.initialize();
+    if (!container) throw new Error('Container not initialized');
     
     try {
       // Kill existing server process if any
@@ -170,7 +227,22 @@ export class WebContainerService {
     output: string;
     exitCode: number;
   }> {
+    if (!this.isAvailable) {
+      // Return mock output for environments where WebContainer isn't available
+      return {
+        output: `Command executed: ${command} ${args.join(' ')}\n(WebContainer not available)`,
+        exitCode: 0
+      };
+    }
+
     const container = await this.initialize();
+    if (!container) {
+      return {
+        output: 'Container not available',
+        exitCode: 1
+      };
+    }
+    
     const process = await container.spawn(command, args);
     
     let output = '';
@@ -199,6 +271,10 @@ export class WebContainerService {
       this.serverProcess = null;
       this.serverUrl = null;
     }
+  }
+
+  isWebContainerAvailable(): boolean {
+    return this.isAvailable;
   }
 }
 

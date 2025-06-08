@@ -7,8 +7,8 @@ import type { AIAgent, AIMessage, AIResponse } from './types';
 
 // Create AI clients with error handling
 const createAIClients = () => {
-  const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
-  const googleAiApiKey = process.env.GOOGLE_AI_API_KEY;
+  const anthropicApiKey = process.env.ANTHROPIC_API_KEY || process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY;
+  const googleAiApiKey = process.env.GOOGLE_AI_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_AI_API_KEY;
 
   if (!anthropicApiKey && !googleAiApiKey) {
     console.warn('No AI API keys available. Please configure either ANTHROPIC_API_KEY or GOOGLE_AI_API_KEY.');
@@ -46,7 +46,16 @@ export class AgentService {
 
     // Check if any AI service is available
     if (!anthropic && !genAI) {
-      throw new Error('AI services are not configured. Please set up either ANTHROPIC_API_KEY or GOOGLE_AI_API_KEY in your environment.');
+      // Return a mock response when no API keys are configured
+      console.warn('AI services not configured. Returning mock response.');
+      return {
+        content: 'AI services are not configured. Please add your API keys to the environment variables.',
+        usage: {
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+        },
+      };
     }
 
     // Try Claude first if available and configured

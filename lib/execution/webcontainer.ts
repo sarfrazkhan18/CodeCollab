@@ -1,4 +1,4 @@
-import { WebContainer } from '@webcontainer/api';
+import { WebContainer, FileSystemTree } from '@webcontainer/api';
 
 export class WebContainerService {
   private static instance: WebContainerService;
@@ -38,9 +38,42 @@ export class WebContainerService {
     }
   }
 
-  async createProject(files: Record<string, any>): Promise<void> {
+  async createProject(files: Record<string, string>): Promise<void> {
     const container = await this.initialize();
-    await container.mount(files);
+    
+    // Transform flat files object to FileSystemTree
+    const fileSystemTree = this.transformToFileSystemTree(files);
+    await container.mount(fileSystemTree);
+  }
+
+  private transformToFileSystemTree(files: Record<string, string>): FileSystemTree {
+    const tree: FileSystemTree = {};
+
+    for (const [filePath, content] of Object.entries(files)) {
+      const pathParts = filePath.split('/').filter(part => part !== '');
+      let current = tree;
+
+      // Navigate/create directory structure
+      for (let i = 0; i < pathParts.length - 1; i++) {
+        const dirName = pathParts[i];
+        if (!current[dirName]) {
+          current[dirName] = {
+            directory: {}
+          };
+        }
+        current = current[dirName].directory!;
+      }
+
+      // Add the file
+      const fileName = pathParts[pathParts.length - 1];
+      current[fileName] = {
+        file: {
+          contents: content
+        }
+      };
+    }
+
+    return tree;
   }
 
   async writeFile(path: string, content: string): Promise<void> {

@@ -40,6 +40,7 @@ export class RealTimeSync {
   private eventListeners: Map<string, Function[]> = new Map();
   private cursors: Map<string, UserCursor> = new Map();
   private comments: Map<string, Comment> = new Map();
+  private isConnected: boolean = false;
 
   private constructor() {
     this.doc = new Y.Doc();
@@ -54,9 +55,17 @@ export class RealTimeSync {
 
   async connect(projectId: string, userId: string, userName: string): Promise<void> {
     try {
+      // Check if WebSocket URL is configured
+      const wsUrl = process.env.NEXT_PUBLIC_COLLABORATION_WS_URL;
+      if (!wsUrl) {
+        console.warn('Collaboration WebSocket URL not configured. Running in offline mode.');
+        this.simulateOfflineMode(userId, userName);
+        return;
+      }
+
       // Initialize WebSocket provider
       this.provider = new WebsocketProvider(
-        process.env.NEXT_PUBLIC_COLLABORATION_WS_URL || 'ws://localhost:1234',
+        wsUrl,
         `project-${projectId}`,
         this.doc
       );
@@ -78,11 +87,39 @@ export class RealTimeSync {
       // Listen for document changes
       this.doc.on('update', this.handleDocumentUpdate.bind(this));
 
-      this.emit('connected', { projectId, userId, userName });
+      // Handle connection events
+      this.provider.on('status', ({ status }: { status: string }) => {
+        if (status === 'connected') {
+          this.isConnected = true;
+          this.emit('connected', { projectId, userId, userName });
+        } else if (status === 'disconnected') {
+          this.isConnected = false;
+          this.emit('disconnected', {});
+        }
+      });
+
     } catch (error) {
       console.error('Failed to connect to collaboration server:', error);
-      throw error;
+      // Fall back to offline mode
+      this.simulateOfflineMode(userId, userName);
     }
+  }
+
+  private simulateOfflineMode(userId: string, userName: string): void {
+    // Simulate being connected but in offline mode
+    this.isConnected = false;
+    
+    // Add current user to active users
+    const currentUser = {
+      id: userId,
+      name: userName,
+      color: this.generateUserColor(),
+    };
+
+    // Emit connected event even in offline mode
+    setTimeout(() => {
+      this.emit('connected', { userId, userName });
+    }, 100);
   }
 
   disconnect(): void {
@@ -94,6 +131,7 @@ export class RealTimeSync {
       this.awareness.destroy();
       this.awareness = null;
     }
+    this.isConnected = false;
     this.emit('disconnected', {});
   }
 
@@ -157,9 +195,11 @@ export class RealTimeSync {
 
     this.comments.set(comment.id, comment);
     
-    // Sync comment to other users
-    const commentsMap = this.doc.getMap('comments');
-    commentsMap.set(comment.id, comment);
+    // Sync comment to other users if connected
+    if (this.isConnected) {
+      const commentsMap = this.doc.getMap('comments');
+      commentsMap.set(comment.id, comment);
+    }
 
     this.emit('comment-added', comment);
     return comment;
@@ -185,9 +225,11 @@ export class RealTimeSync {
 
     parentComment.replies.push(reply);
     
-    // Update in shared document
-    const commentsMap = this.doc.getMap('comments');
-    commentsMap.set(commentId, parentComment);
+    // Update in shared document if connected
+    if (this.isConnected) {
+      const commentsMap = this.doc.getMap('comments');
+      commentsMap.set(commentId, parentComment);
+    }
 
     this.emit('comment-replied', { parentComment, reply });
     return reply;
@@ -198,9 +240,11 @@ export class RealTimeSync {
     if (comment) {
       comment.resolved = true;
       
-      // Update in shared document
-      const commentsMap = this.doc.getMap('comments');
-      commentsMap.set(commentId, comment);
+      // Update in shared document if connected
+      if (this.isConnected) {
+        const commentsMap = this.doc.getMap('comments');
+        commentsMap.set(commentId, comment);
+      }
 
       this.emit('comment-resolved', comment);
     }
@@ -281,7 +325,14 @@ export class RealTimeSync {
   }
 
   getActiveUsers(): Array<{ id: string; name: string; color: string }> {
-    if (!this.awareness) return [];
+    if (!this.awareness) {
+      // Return mock user in offline mode
+      return [{
+        id: 'current-user',
+        name: 'You',
+        color: this.generateUserColor()
+      }];
+    }
     
     const users: Array<{ id: string; name: string; color: string }> = [];
     this.awareness.getStates().forEach((state: any) => {

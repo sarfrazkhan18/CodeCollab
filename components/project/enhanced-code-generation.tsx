@@ -12,7 +12,7 @@ import {
   CodeIcon,
   FileIcon,
   TestTubeIcon,
-  DocumentationIcon,
+  FileTextIcon,
   SparklesIcon,
   CopyIcon,
   CheckIcon
@@ -181,7 +181,7 @@ export function EnhancedCodeGeneration({ projectId, onCodeGenerated }: EnhancedC
       case 'test':
         return <TestTubeIcon className="h-4 w-4" />;
       case 'documentation':
-        return <DocumentationIcon className="h-4 w-4" />;
+        return <FileTextIcon className="h-4 w-4" />;
       default:
         return <FileIcon className="h-4 w-4" />;
     }

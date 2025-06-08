@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/components/supabase-provider';
 import { 
   Clock, 
   CodeIcon, 
@@ -18,8 +17,16 @@ import {
   RocketIcon,
   GitBranchIcon,
   TerminalIcon,
-  SparklesIcon
+  SparklesIcon,
+  TrashIcon,
+  MoreVerticalIcon
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Project {
@@ -27,10 +34,10 @@ interface Project {
   name: string;
   description: string;
   created_at: string;
-  tech_stack: string[];
-  collaborators_count: number;
-  deployment_url?: string;
-  status: string;
+  updated_at: string;
+  framework: string;
+  template?: string;
+  files: Record<string, string>;
   features: string[];
 }
 
@@ -41,64 +48,91 @@ export function ProjectsList() {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        setIsLoading(true);
-        
-        // This would be a real Supabase query in production
-        // For demo purposes, we're using mock data with enhanced features
-        setTimeout(() => {
-          const mockProjects = [
-            {
-              id: '1',
-              name: 'Instagram Clone',
-              description: 'A social media app with photo sharing capabilities and real-time features',
-              created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-              tech_stack: ['React', 'Supabase', 'Tailwind'],
-              collaborators_count: 3,
-              deployment_url: 'https://instagram-clone.vercel.app',
-              status: 'active',
-              features: ['Code Intelligence', 'Real-time Collaboration', 'Smart Deployment']
-            },
-            {
-              id: '2',
-              name: 'E-Commerce Dashboard',
-              description: 'Admin panel for managing products and orders with AI insights',
-              created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-              tech_stack: ['Next.js', 'FastAPI', 'PostgreSQL'],
-              collaborators_count: 2,
-              status: 'active',
-              features: ['AI Code Generation', 'Git Integration', 'Terminal Access']
-            },
-            {
-              id: '3',
-              name: 'Task Management App',
-              description: 'Collaborative task management with real-time updates and AI assistance',
-              created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-              tech_stack: ['React', 'Node.js', 'MongoDB'],
-              collaborators_count: 4,
-              deployment_url: 'https://tasks-app.vercel.app',
-              status: 'active',
-              features: ['All Features Available']
-            }
-          ];
-          setProjects(mockProjects);
-          setIsLoading(false);
-        }, 1000);
-        
-      } catch (error) {
-        console.error('Error fetching projects:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load projects',
-          variant: 'destructive',
-        });
-        setIsLoading(false);
-      }
-    };
+    loadProjects();
+  }, []);
 
-    fetchProjects();
-  }, [toast]);
+  const loadProjects = () => {
+    try {
+      setIsLoading(true);
+      
+      // Load projects from localStorage
+      const storedProjects = JSON.parse(localStorage.getItem('codecollab_projects') || '[]');
+      
+      // Add demo projects if no projects exist
+      if (storedProjects.length === 0) {
+        const demoProjects = [
+          {
+            id: 'demo-instagram',
+            name: 'Instagram Clone',
+            description: 'A social media app with photo sharing capabilities and real-time features',
+            created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+            updated_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+            framework: 'react',
+            template: 'social-media',
+            files: {},
+            features: ['Code Intelligence', 'Real-time Collaboration', 'Smart Deployment']
+          },
+          {
+            id: 'demo-ecommerce',
+            name: 'E-Commerce Dashboard',
+            description: 'Admin panel for managing products and orders with AI insights',
+            created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+            updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+            framework: 'react',
+            template: 'ecommerce-store',
+            files: {},
+            features: ['AI Code Generation', 'Git Integration', 'Terminal Access']
+          },
+          {
+            id: 'demo-tasks',
+            name: 'Task Management App',
+            description: 'Collaborative task management with real-time updates and AI assistance',
+            created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+            updated_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+            framework: 'react',
+            template: 'task-manager',
+            files: {},
+            features: ['All Features Available']
+          }
+        ];
+        
+        setProjects([...storedProjects, ...demoProjects]);
+      } else {
+        setProjects(storedProjects);
+      }
+      
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error loading projects:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load projects',
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+    }
+  };
+
+  const deleteProject = (projectId: string) => {
+    try {
+      const storedProjects = JSON.parse(localStorage.getItem('codecollab_projects') || '[]');
+      const updatedProjects = storedProjects.filter((p: Project) => p.id !== projectId);
+      localStorage.setItem('codecollab_projects', JSON.stringify(updatedProjects));
+      
+      setProjects(prev => prev.filter(p => p.id !== projectId));
+      
+      toast({
+        title: 'Project deleted',
+        description: 'Project has been removed successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete project',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const getFeatureIcon = (feature: string) => {
     switch (feature) {
@@ -117,6 +151,17 @@ export function ProjectsList() {
       default:
         return <CodeIcon className="h-3 w-3" />;
     }
+  };
+
+  const getFrameworkBadge = (framework: string) => {
+    const colors = {
+      react: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
+      vue: 'bg-green-500/10 text-green-500 border-green-500/20',
+      angular: 'bg-red-500/10 text-red-500 border-red-500/20',
+      svelte: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+    };
+    
+    return colors[framework as keyof typeof colors] || 'bg-gray-500/10 text-gray-500 border-gray-500/20';
   };
 
   const handleOpenProject = (projectId: string) => {
@@ -187,42 +232,51 @@ export function ProjectsList() {
         >
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
-              <CardTitle className="text-lg group-hover:text-primary transition-colors">
-                {project.name}
-              </CardTitle>
-              <div className="flex items-center gap-2">
-                {project.status === 'active' && (
-                  <Badge variant="outline\" className="bg-green-500/10 text-green-500 border-green-500/20">
+              <div className="flex-1">
+                <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                  {project.name}
+                </CardTitle>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="outline" className={getFrameworkBadge(project.framework)}>
+                    {project.framework}
+                  </Badge>
+                  <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
                     Active
                   </Badge>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
+                </div>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                  <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <MoreVerticalIcon className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={(e) => {
                     e.stopPropagation();
                     handleOpenProject(project.id);
-                  }}
-                >
-                  <PlayIcon className="h-4 w-4" />
-                </Button>
-              </div>
+                  }}>
+                    <PlayIcon className="h-4 w-4 mr-2" />
+                    Open Project
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteProject(project.id);
+                    }}
+                    className="text-red-600"
+                  >
+                    <TrashIcon className="h-4 w-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <CardDescription className="line-clamp-2">{project.description}</CardDescription>
+            <CardDescription className="line-clamp-2 mt-2">{project.description}</CardDescription>
           </CardHeader>
 
           <CardContent>
             <div className="space-y-4">
-              {/* Tech Stack */}
-              <div className="flex flex-wrap gap-2">
-                {project.tech_stack.map((tech) => (
-                  <Badge key={tech} variant="secondary" className="bg-secondary/50">
-                    {tech}
-                  </Badge>
-                ))}
-              </div>
-
               {/* Available Features */}
               <div className="space-y-2">
                 <h4 className="text-sm font-medium text-muted-foreground">Available Features:</h4>
@@ -248,23 +302,8 @@ export function ProjectsList() {
               {formatDistanceToNow(new Date(project.created_at), { addSuffix: true })}
             </div>
             <div className="flex items-center">
-              <Users2 className="h-3 w-3 mr-1" />
-              {project.collaborators_count} {project.collaborators_count === 1 ? 'member' : 'members'}
+              <span className="text-xs">Updated {formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}</span>
             </div>
-            {project.deployment_url && (
-              <div className="flex items-center">
-                <ExternalLink className="h-3 w-3 mr-1" />
-                <a 
-                  href={project.deployment_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="hover:text-primary transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  Live
-                </a>
-              </div>
-            )}
           </CardFooter>
         </Card>
       ))}

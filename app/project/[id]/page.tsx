@@ -1,11 +1,12 @@
 import { EnhancedWorkspaceV2 } from '@/components/project/enhanced-workspace-v2';
 import { AuthCheck } from '@/components/auth-check';
 
+// Generate static params for known demo projects
 export async function generateStaticParams() {
-  // Return an array of possible project IDs for static generation
-  // In a real application, you might fetch these from your database
   return [
-    { id: 'demo' },
+    { id: 'demo-instagram' },
+    { id: 'demo-ecommerce' },
+    { id: 'demo-tasks' },
     { id: 'sample' },
     { id: 'example' }
   ];

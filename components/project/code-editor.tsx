@@ -3,168 +3,239 @@
 import { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { BrainCircuitIcon, PlayIcon, SaveIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { BrainCircuitIcon, PlayIcon, SaveIcon, CopyIcon, DownloadIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface CodeEditorProps {
   filePath: string;
+  code?: string;
+  onChange?: (code: string) => void;
 }
 
-export function CodeEditor({ filePath }: CodeEditorProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [fileContent, setFileContent] = useState('');
+export function CodeEditor({ filePath, code = '', onChange }: CodeEditorProps) {
+  const [editorCode, setEditorCode] = useState(code);
   const [language, setLanguage] = useState('typescript');
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isModified, setIsModified] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchFileContent = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Determine language based on file extension
-        const extension = filePath.split('.').pop()?.toLowerCase();
-        
-        if (extension === 'js') setLanguage('javascript');
-        else if (extension === 'ts') setLanguage('typescript');
-        else if (extension === 'jsx' || extension === 'tsx') setLanguage('typescript');
-        else if (extension === 'css') setLanguage('css');
-        else if (extension === 'html') setLanguage('html');
-        else if (extension === 'json') setLanguage('json');
-        else if (extension === 'py') setLanguage('python');
-        else setLanguage('typescript');
-        
-        // In a real app, this would fetch file content from Supabase
-        // For demo purposes, we're using mock data
-        const response = await fetch(`/api/files/${encodeURIComponent(filePath)}`);
-        if (!response.ok) throw new Error('Failed to fetch file content');
-        
-        const data = await response.json();
-        setFileContent(data.content);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error loading file:', error);
-        setFileContent(`// Error loading file: ${filePath}`);
-        setIsLoading(false);
-      }
-    };
+    setEditorCode(code);
+    setIsModified(false);
+  }, [code, filePath]);
 
-    fetchFileContent();
+  useEffect(() => {
+    // Determine language based on file extension
+    const extension = filePath.split('.').pop()?.toLowerCase();
+    
+    const languageMap: Record<string, string> = {
+      'js': 'javascript',
+      'jsx': 'javascript',
+      'ts': 'typescript',
+      'tsx': 'typescript',
+      'css': 'css',
+      'scss': 'scss',
+      'html': 'html',
+      'json': 'json',
+      'md': 'markdown',
+      'py': 'python',
+      'java': 'java',
+      'cpp': 'cpp',
+      'c': 'c',
+      'php': 'php',
+      'rb': 'ruby',
+      'go': 'go',
+      'rs': 'rust',
+      'sql': 'sql',
+      'xml': 'xml',
+      'yaml': 'yaml',
+      'yml': 'yaml',
+    };
+    
+    setLanguage(languageMap[extension || ''] || 'typescript');
   }, [filePath]);
 
   const handleEditorChange = (value: string | undefined) => {
-    if (value !== undefined) {
-      setFileContent(value);
-    }
+    const newCode = value || '';
+    setEditorCode(newCode);
+    setIsModified(newCode !== code);
+    onChange?.(newCode);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
+    onChange?.(editorCode);
+    setIsModified(false);
+    toast({
+      title: 'File saved',
+      description: `Successfully saved ${filePath}`,
+    });
+  };
+
+  const handleCopy = async () => {
     try {
-      // In production, this would save to your backend
+      await navigator.clipboard.writeText(editorCode);
       toast({
-        title: 'File saved',
-        description: `Successfully saved ${filePath}`,
+        title: 'Code copied',
+        description: 'Code has been copied to clipboard',
       });
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to save file',
+        title: 'Copy failed',
+        description: 'Failed to copy code to clipboard',
         variant: 'destructive',
       });
     }
   };
 
-  const handleAIAssist = async () => {
-    try {
-      const response = await fetch('/api/ai', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          agentId: 'frontend-specialist',
-          messages: [
-            {
-              role: 'user',
-              content: `Please suggest improvements for this code:\n\n${fileContent}`,
-            },
-          ],
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to get AI suggestions');
-      
-      const data = await response.json();
-      setSuggestions([data.content]);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to get AI suggestions',
-        variant: 'destructive',
-      });
-    }
+  const handleDownload = () => {
+    const blob = new Blob([editorCode], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filePath.split('/').pop() || 'file.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: 'File downloaded',
+      description: `Downloaded ${filePath}`,
+    });
   };
+
+  const getFileIcon = (extension: string) => {
+    const iconMap: Record<string, string> = {
+      'tsx': '⚛️',
+      'jsx': '⚛️',
+      'ts': '🔷',
+      'js': '🟨',
+      'css': '🎨',
+      'html': '🌐',
+      'json': '📋',
+      'md': '📝',
+      'py': '🐍',
+      'java': '☕',
+      'cpp': '⚙️',
+      'go': '🐹',
+      'rs': '🦀',
+      'php': '🐘',
+    };
+    
+    return iconMap[extension] || '📄';
+  };
+
+  const extension = filePath.split('.').pop()?.toLowerCase() || '';
 
   return (
     <div className="h-full flex flex-col">
-      <div className="border-b px-4 py-2 flex items-center justify-between">
-        <span className="text-sm font-medium">{filePath}</span>
+      <div className="border-b px-4 py-2 flex items-center justify-between bg-muted/30">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={handleAIAssist}>
-            <BrainCircuitIcon className="h-4 w-4 mr-2" />
-            AI Assist
+          <span className="text-lg">{getFileIcon(extension)}</span>
+          <span className="text-sm font-medium">{filePath}</span>
+          {isModified && (
+            <Badge variant="outline" className="text-xs bg-orange-500/10 text-orange-500 border-orange-500/20">
+              Modified
+            </Badge>
+          )}
+          <Badge variant="outline" className="text-xs">
+            {language}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={handleCopy}>
+            <CopyIcon className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleSave}>
+          <Button variant="ghost" size="sm" onClick={handleDownload}>
+            <DownloadIcon className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleSave} disabled={!isModified}>
             <SaveIcon className="h-4 w-4 mr-2" />
             Save
-          </Button>
-          <Button variant="ghost" size="sm">
-            <PlayIcon className="h-4 w-4 mr-2" />
-            Run
           </Button>
         </div>
       </div>
 
-      <div className="flex-1 flex">
-        <div className="flex-1">
-          <Editor
-            height="100%"
-            defaultLanguage={language}
-            value={fileContent}
-            onChange={handleEditorChange}
-            loading={isLoading}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              lineNumbers: 'on',
-              roundedSelection: false,
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-              theme: 'vs-dark',
-            }}
-          />
-        </div>
-
-        {suggestions.length > 0 && (
-          <>
-            <Separator orientation="vertical" />
-            <div className="w-80 border-l">
-              <div className="p-4">
-                <h3 className="text-sm font-medium mb-2">AI Suggestions</h3>
-                <ScrollArea className="h-[calc(100vh-12rem)]">
-                  {suggestions.map((suggestion, index) => (
-                    <div key={index} className="prose prose-sm">
-                      <pre className="whitespace-pre-wrap">{suggestion}</pre>
-                    </div>
-                  ))}
-                </ScrollArea>
+      <div className="flex-1 relative">
+        <Editor
+          height="100%"
+          language={language}
+          value={editorCode}
+          onChange={handleEditorChange}
+          options={{
+            minimap: { enabled: false },
+            fontSize: 14,
+            lineNumbers: 'on',
+            roundedSelection: false,
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
+            theme: 'vs-dark',
+            wordWrap: 'on',
+            formatOnPaste: true,
+            formatOnType: true,
+            autoIndent: 'full',
+            tabSize: 2,
+            insertSpaces: true,
+            detectIndentation: true,
+            trimAutoWhitespace: true,
+            renderWhitespace: 'selection',
+            renderControlCharacters: false,
+            fontFamily: 'JetBrains Mono, Fira Code, Monaco, Consolas, monospace',
+            fontLigatures: true,
+            cursorBlinking: 'smooth',
+            cursorSmoothCaretAnimation: 'on',
+            smoothScrolling: true,
+            mouseWheelZoom: true,
+            contextmenu: true,
+            quickSuggestions: {
+              other: true,
+              comments: true,
+              strings: true
+            },
+            suggestOnTriggerCharacters: true,
+            acceptSuggestionOnEnter: 'on',
+            acceptSuggestionOnCommitCharacter: true,
+            snippetSuggestions: 'top',
+            emptySelectionClipboard: false,
+            copyWithSyntaxHighlighting: true,
+            multiCursorModifier: 'ctrlCmd',
+            accessibilitySupport: 'auto',
+            find: {
+              addExtraSpaceOnTop: false,
+              autoFindInSelection: 'never',
+              seedSearchStringFromSelection: 'always'
+            },
+            folding: true,
+            foldingStrategy: 'indentation',
+            showFoldingControls: 'mouseover',
+            unfoldOnClickAfterEndOfLine: false,
+            bracketPairColorization: {
+              enabled: true
+            },
+            guides: {
+              bracketPairs: true,
+              bracketPairsHorizontal: true,
+              highlightActiveBracketPair: true,
+              indentation: true,
+              highlightActiveIndentation: true
+            },
+            lightbulb: {
+              enabled: true
+            },
+            codeActionsOnSave: {
+              'source.fixAll': true,
+              'source.organizeImports': true
+            }
+          }}
+          loading={
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+                <p className="text-muted-foreground">Loading editor...</p>
               </div>
             </div>
-          </>
-        )}
+          }
+        />
       </div>
     </div>
   );

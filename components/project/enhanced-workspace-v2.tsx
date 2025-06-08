@@ -24,13 +24,24 @@ import { CollaborationPanel } from '@/components/collaboration/collaboration-pan
 import { TemplateGallery } from '@/components/templates/template-gallery';
 import { templateService, ProjectTemplate } from '@/lib/templates/project-templates';
 
+interface Project {
+  id: string;
+  name: string;
+  description: string;
+  framework: string;
+  template?: string;
+  files: Record<string, string>;
+  created_at: string;
+  updated_at: string;
+}
+
 interface EnhancedWorkspaceV2Props {
   projectId: string;
 }
 
 export function EnhancedWorkspaceV2({ projectId }: EnhancedWorkspaceV2Props) {
   const [isLoadingProject, setIsLoadingProject] = useState(true);
-  const [projectName, setProjectName] = useState('Loading...');
+  const [project, setProject] = useState<Project | null>(null);
   const [currentFile, setCurrentFile] = useState<string | null>(null);
   const [currentCode, setCurrentCode] = useState<string>('');
   const [showLeftPanel, setShowLeftPanel] = useState(true);
@@ -47,100 +58,332 @@ export function EnhancedWorkspaceV2({ projectId }: EnhancedWorkspaceV2Props) {
   const userName = 'John Doe';
 
   useEffect(() => {
-    const fetchProjectDetails = async () => {
-      try {
-        setIsLoadingProject(true);
-        
-        // Mock project loading - in production this would fetch from Supabase
-        setTimeout(() => {
-          if (projectId === 'new-project-id') {
-            setProjectName('My Awesome Project');
-          } else if (projectId === '1') {
-            setProjectName('Instagram Clone');
-          } else if (projectId === '2') {
-            setProjectName('E-Commerce Dashboard');
-          } else if (projectId === '3') {
-            setProjectName('Task Management App');
-          } else {
-            setProjectName(`Project ${projectId}`);
+    loadProject();
+  }, [projectId]);
+
+  const loadProject = async () => {
+    try {
+      setIsLoadingProject(true);
+      
+      // Load project from localStorage
+      const storedProjects = JSON.parse(localStorage.getItem('codecollab_projects') || '[]');
+      let foundProject = storedProjects.find((p: Project) => p.id === projectId);
+      
+      // If not found in localStorage, check for demo projects
+      if (!foundProject) {
+        const demoProjects = {
+          'demo-instagram': {
+            id: 'demo-instagram',
+            name: 'Instagram Clone',
+            description: 'A social media app with photo sharing capabilities',
+            framework: 'react',
+            template: 'social-media',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            files: {}
+          },
+          'demo-ecommerce': {
+            id: 'demo-ecommerce',
+            name: 'E-Commerce Dashboard',
+            description: 'Admin panel for managing products and orders',
+            framework: 'react',
+            template: 'ecommerce-store',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            files: {}
+          },
+          'demo-tasks': {
+            id: 'demo-tasks',
+            name: 'Task Management App',
+            description: 'Collaborative task management with real-time updates',
+            framework: 'react',
+            template: 'task-manager',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            files: {}
           }
+        };
+        
+        foundProject = demoProjects[projectId as keyof typeof demoProjects];
+      }
+      
+      if (!foundProject) {
+        toast({
+          title: 'Project not found',
+          description: 'The requested project could not be found',
+          variant: 'destructive',
+        });
+        router.push('/dashboard');
+        return;
+      }
+      
+      setProject(foundProject);
+      
+      // Initialize project files if empty
+      if (!foundProject.files || Object.keys(foundProject.files).length === 0) {
+        const initialFiles = createInitialProjectFiles(foundProject);
+        foundProject.files = initialFiles;
+        
+        // Update localStorage if it's a stored project
+        if (storedProjects.some((p: Project) => p.id === projectId)) {
+          const updatedProjects = storedProjects.map((p: Project) => 
+            p.id === projectId ? foundProject : p
+          );
+          localStorage.setItem('codecollab_projects', JSON.stringify(updatedProjects));
+        }
+      }
+      
+      setProjectFiles(foundProject.files);
+      
+      // Select the main file
+      const mainFile = Object.keys(foundProject.files).find(file => 
+        file.includes('page.tsx') || file.includes('App.tsx') || file.includes('index.tsx')
+      ) || Object.keys(foundProject.files)[0];
+      
+      if (mainFile) {
+        setCurrentFile(mainFile);
+        setCurrentCode(foundProject.files[mainFile] || '');
+      }
+      
+      setIsLoadingProject(false);
+    } catch (error) {
+      console.error('Error loading project:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load project',
+        variant: 'destructive',
+      });
+      setIsLoadingProject(false);
+    }
+  };
 
-          // Initialize with basic React project structure
-          setProjectFiles({
-            'package.json': JSON.stringify({
-              name: 'my-project',
-              version: '1.0.0',
-              scripts: {
-                dev: 'next dev',
-                build: 'next build',
-                start: 'next start'
-              },
-              dependencies: {
-                'react': '^18.2.0',
-                'react-dom': '^18.2.0',
-                'next': '^14.0.0',
-                'typescript': '^5.0.0'
-              }
-            }, null, 2),
-            'src/App.tsx': `import React from 'react';
+  const createInitialProjectFiles = (project: Project): Record<string, string> => {
+    const projectName = project.name.toLowerCase().replace(/\s+/g, '-');
+    
+    return {
+      'package.json': JSON.stringify({
+        name: projectName,
+        version: '1.0.0',
+        private: true,
+        scripts: {
+          dev: 'next dev',
+          build: 'next build',
+          start: 'next start',
+          lint: 'next lint'
+        },
+        dependencies: {
+          'react': '^18.2.0',
+          'react-dom': '^18.2.0',
+          'next': '^14.0.0',
+          'typescript': '^5.0.0',
+          '@types/node': '^20.0.0',
+          '@types/react': '^18.0.0',
+          '@types/react-dom': '^18.0.0',
+          'tailwindcss': '^3.4.0',
+          'autoprefixer': '^10.4.0',
+          'postcss': '^8.4.0'
+        }
+      }, null, 2),
+      'README.md': `# ${project.name}
 
-function App() {
+${project.description}
+
+## Getting Started
+
+\`\`\`bash
+npm run dev
+\`\`\`
+
+Open [http://localhost:3000](http://localhost:3000) to view the application.
+
+## Features
+
+- ⚡ Next.js 14 with App Router
+- 🎨 Tailwind CSS for styling
+- 📝 TypeScript for type safety
+- 🤖 AI-powered development with CodeCollab AI
+
+## Tech Stack
+
+- Framework: ${project.framework}
+- Language: TypeScript
+- Styling: Tailwind CSS
+- Deployment: Ready for Vercel/Netlify
+`,
+      'app/page.tsx': `export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold mb-4">Welcome to Your Project</h1>
-        <p className="text-gray-600">Start building something amazing!</p>
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="container mx-auto px-4 py-16">
+        <div className="text-center">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+            ${project.name}
+          </h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+            ${project.description}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+              Get Started
+            </button>
+            <button className="border border-gray-300 hover:border-gray-400 text-gray-700 dark:text-gray-300 font-semibold py-3 px-6 rounded-lg transition-colors">
+              Learn More
+            </button>
+          </div>
+        </div>
+        
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">🚀 Fast Development</h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              Build faster with AI-powered code generation and intelligent suggestions.
+            </p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">🤝 Collaboration</h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              Work together in real-time with live cursors and instant updates.
+            </p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">📦 Ready to Deploy</h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              Deploy instantly to Vercel, Netlify, or your preferred platform.
+            </p>
+          </div>
+        </div>
       </div>
-    </div>
+    </main>
   );
+}`,
+      'app/layout.tsx': `import './globals.css'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: '${project.name}',
+  description: '${project.description}',
 }
 
-export default App;`,
-            'src/index.tsx': `import React from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App';
-import './index.css';
-
-const root = createRoot(document.getElementById('root')!);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);`,
-            'src/index.css': `@tailwind base;
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  )
+}`,
+      'app/globals.css': `@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+:root {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 3.9%;
+  --primary: 0 0% 9%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 0 0% 96.1%;
+  --secondary-foreground: 0 0% 9%;
+  --muted: 0 0% 96.1%;
+  --muted-foreground: 0 0% 45.1%;
+  --accent: 0 0% 96.1%;
+  --accent-foreground: 0 0% 9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 89.8%;
+  --input: 0 0% 89.8%;
+  --ring: 0 0% 3.9%;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 0 0% 3.9%;
+  --foreground: 0 0% 98%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 9%;
+  --secondary: 0 0% 14.9%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 0 0% 14.9%;
+  --muted-foreground: 0 0% 63.9%;
+  --accent: 0 0% 14.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 0 0% 14.9%;
+  --input: 0 0% 14.9%;
+  --ring: 0 0% 83.1%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}`,
+      'tailwind.config.js': `/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+      },
+      borderRadius: {
+        lg: 'var(--radius)',
+        md: 'calc(var(--radius) - 2px)',
+        sm: 'calc(var(--radius) - 4px)',
+      },
+    },
+  },
+  plugins: [],
 }`
-          });
-
-          setIsLoadingProject(false);
-        }, 800);
-        
-      } catch (error) {
-        console.error('Error fetching project details:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load project details',
-          variant: 'destructive',
-        });
-        setIsLoadingProject(false);
-      }
     };
-
-    fetchProjectDetails();
-  }, [projectId, toast]);
+  };
 
   const handleFileSelect = (filePath: string) => {
     setCurrentFile(filePath);
     setCurrentCode(projectFiles[filePath] || '');
+  };
+
+  const handleCodeChange = (newCode: string) => {
+    setCurrentCode(newCode);
+    if (currentFile) {
+      setProjectFiles(prev => ({
+        ...prev,
+        [currentFile]: newCode
+      }));
+    }
   };
 
   const handleCodeGenerated = (code: string, filePath: string) => {
@@ -154,7 +397,7 @@ body {
 
   const handleTemplateSelect = async (template: ProjectTemplate) => {
     try {
-      const projectData = await templateService.createProjectFromTemplate(template.id, projectName);
+      const projectData = await templateService.createProjectFromTemplate(template.id, project?.name || 'New Project');
       setProjectFiles(projectData.files);
       setShowTemplateGallery(false);
       
@@ -180,16 +423,21 @@ body {
   };
 
   const handleSaveFile = () => {
-    if (currentFile) {
-      setProjectFiles(prev => ({
-        ...prev,
-        [currentFile]: currentCode
-      }));
+    if (currentFile && project) {
+      // Update project in localStorage
+      const storedProjects = JSON.parse(localStorage.getItem('codecollab_projects') || '[]');
+      const updatedProjects = storedProjects.map((p: Project) => 
+        p.id === project.id 
+          ? { ...p, files: projectFiles, updated_at: new Date().toISOString() }
+          : p
+      );
+      localStorage.setItem('codecollab_projects', JSON.stringify(updatedProjects));
+      
+      toast({
+        title: 'File saved',
+        description: `Saved ${currentFile}`,
+      });
     }
-    toast({
-      title: 'File saved',
-      description: currentFile ? `Saved ${currentFile}` : 'All changes saved',
-    });
   };
 
   const handleRunProject = () => {
@@ -211,9 +459,32 @@ body {
     );
   }
 
+  if (!project) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Project not found</h2>
+          <p className="text-muted-foreground mb-4">The requested project could not be loaded</p>
+          <Button onClick={() => router.push('/dashboard')}>
+            Return to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (showTemplateGallery) {
     return (
       <div className="h-screen">
+        <div className="border-b p-4">
+          <Button
+            variant="ghost"
+            onClick={() => setShowTemplateGallery(false)}
+            className="mb-4"
+          >
+            ← Back to Project
+          </Button>
+        </div>
         <TemplateGallery onSelectTemplate={handleTemplateSelect} />
       </div>
     );
@@ -232,9 +503,9 @@ body {
           >
             <CodeIcon className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold">{projectName}</h1>
+          <h1 className="text-lg font-semibold">{project.name}</h1>
           <Badge variant="outline" className="ml-2 bg-green-500/10 text-green-500 border-green-500/20">
-            Live
+            {project.framework}
           </Badge>
         </div>
         
@@ -287,26 +558,30 @@ body {
                 </div>
                 
                 <TabsContent value="files" className="flex-1 p-0">
-                  <FileExplorer onSelectFile={handleFileSelect} />
+                  <FileExplorer 
+                    onSelectFile={handleFileSelect} 
+                    files={projectFiles}
+                    currentFile={currentFile}
+                  />
                 </TabsContent>
                 
                 <TabsContent value="git" className="flex-1 p-0">
-                  <GitPanel projectId={projectId} />
+                  <GitPanel projectId={project.id} />
                 </TabsContent>
                 
                 <TabsContent value="ai" className="flex-1 p-0">
                   <EnhancedCodeGeneration 
-                    projectId={projectId} 
+                    projectId={project.id} 
                     onCodeGenerated={handleCodeGenerated}
                   />
                 </TabsContent>
                 
                 <TabsContent value="terminal" className="flex-1 p-0">
-                  <TerminalPanel projectId={projectId} />
+                  <TerminalPanel projectId={project.id} />
                 </TabsContent>
                 
                 <TabsContent value="deploy" className="flex-1 p-0">
-                  <DeploymentDashboard projectId={projectId} projectName={projectName} />
+                  <DeploymentDashboard projectId={project.id} projectName={project.name} />
                 </TabsContent>
               </Tabs>
             </ResizablePanel>
@@ -339,13 +614,17 @@ body {
               </div>
               
               {currentFile ? (
-                <CodeEditor filePath={currentFile} />
+                <CodeEditor 
+                  filePath={currentFile} 
+                  code={currentCode}
+                  onChange={handleCodeChange}
+                />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center p-8 text-center">
                   <div className="mb-4 rounded-full bg-muted p-3">
                     <CodeIcon className="h-6 w-6 text-muted-foreground" />
                   </div>
-                  <h3 className="mb-2 text-xl font-semibold">Welcome to Enhanced Workspace</h3>
+                  <h3 className="mb-2 text-xl font-semibold">Welcome to {project.name}</h3>
                   <p className="mb-6 text-muted-foreground max-w-md">
                     Select a file from the explorer, generate code with AI, or create a new file to start coding
                   </p>
@@ -402,16 +681,16 @@ body {
                   </TabsContent>
                   
                   <TabsContent value="preview" className="flex-1 p-0">
-                    <LivePreview projectId={projectId} files={projectFiles} />
+                    <LivePreview projectId={project.id} files={projectFiles} />
                   </TabsContent>
                   
                   <TabsContent value="agents" className="flex-1 p-0">
-                    <AgentPanel projectId={projectId} />
+                    <AgentPanel projectId={project.id} />
                   </TabsContent>
                   
                   <TabsContent value="collab" className="flex-1 p-0">
                     <CollaborationPanel 
-                      projectId={projectId}
+                      projectId={project.id}
                       currentFile={currentFile}
                       userId={userId}
                       userName={userName}

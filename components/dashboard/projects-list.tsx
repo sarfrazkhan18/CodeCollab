@@ -192,7 +192,7 @@ export function ProjectsList() {
               </CardTitle>
               <div className="flex items-center gap-2">
                 {project.status === 'active' && (
-                  <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                  <Badge variant="outline\" className="bg-green-500/10 text-green-500 border-green-500/20">
                     Active
                   </Badge>
                 )}

@@ -4,6 +4,8 @@ export class WebContainerService {
   private static instance: WebContainerService;
   private webcontainer: WebContainer | null = null;
   private isBooting = false;
+  private serverProcess: any = null;
+  private serverUrl: string | null = null;
 
   private constructor() {}
 
@@ -109,19 +111,59 @@ export class WebContainerService {
   }
 
   async startDevServer(): Promise<string> {
-    const container = await this.initialize();
-    const serverProcess = await container.spawn('npm', ['run', 'dev']);
-    
-    // Wait for server to be ready
-    container.on('server-ready', (port, url) => {
-      console.log(`Server ready at ${url}`);
-    });
+    if (this.serverUrl && this.serverProcess) {
+      return this.serverUrl;
+    }
 
-    return new Promise((resolve) => {
-      container.on('server-ready', (port, url) => {
-        resolve(url);
+    const container = await this.initialize();
+    
+    try {
+      // Kill existing server process if any
+      if (this.serverProcess) {
+        this.serverProcess.kill();
+      }
+
+      // Start the development server
+      this.serverProcess = await container.spawn('npm', ['run', 'dev']);
+      
+      // Wait for server to be ready and get the URL
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Server startup timeout'));
+        }, 30000); // 30 second timeout
+
+        container.on('server-ready', (port: number, url: string) => {
+          clearTimeout(timeout);
+          this.serverUrl = url;
+          console.log(`Development server ready at ${url}`);
+          resolve(url);
+        });
+
+        // Listen for process output to detect when server is ready
+        this.serverProcess.output.pipeTo(new WritableStream({
+          write(data) {
+            console.log('Server output:', data);
+            // Look for Next.js ready message
+            if (data.includes('Ready') || data.includes('localhost:3000')) {
+              clearTimeout(timeout);
+              const url = 'http://localhost:3000';
+              this.serverUrl = url;
+              resolve(url);
+            }
+          }
+        }));
+
+        // Handle process exit
+        this.serverProcess.exit.then((code: number) => {
+          if (code !== 0) {
+            clearTimeout(timeout);
+            reject(new Error(`Development server exited with code ${code}`));
+          }
+        });
       });
-    });
+    } catch (error) {
+      throw new Error(`Failed to start development server: ${error}`);
+    }
   }
 
   async executeCommand(command: string, args: string[] = []): Promise<{
@@ -145,6 +187,18 @@ export class WebContainerService {
 
   getContainer(): WebContainer | null {
     return this.webcontainer;
+  }
+
+  getServerUrl(): string | null {
+    return this.serverUrl;
+  }
+
+  async stopServer(): Promise<void> {
+    if (this.serverProcess) {
+      this.serverProcess.kill();
+      this.serverProcess = null;
+      this.serverUrl = null;
+    }
   }
 }
 

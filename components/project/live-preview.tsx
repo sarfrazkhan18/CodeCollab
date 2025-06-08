@@ -12,7 +12,8 @@ import {
   MonitorIcon,
   SmartphoneIcon,
   TabletIcon,
-  SettingsIcon
+  SettingsIcon,
+  AlertCircleIcon
 } from 'lucide-react';
 import { previewService, PreviewConfig } from '@/lib/execution/preview';
 import { webContainerService } from '@/lib/execution/webcontainer';
@@ -29,6 +30,7 @@ export function LivePreview({ projectId, files }: LivePreviewProps) {
   const [previewConfig, setPreviewConfig] = useState<PreviewConfig | null>(null);
   const [viewportSize, setViewportSize] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [isServerRunning, setIsServerRunning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { toast } = useToast();
 
@@ -41,6 +43,23 @@ export function LivePreview({ projectId, files }: LivePreviewProps) {
   const startPreview = async () => {
     try {
       setIsLoading(true);
+      setError(null);
+      
+      // Check if files object is valid
+      if (!files || typeof files !== 'object') {
+        throw new Error('Invalid files object provided');
+      }
+
+      // Validate that we have the necessary files
+      const hasPackageJson = 'package.json' in files;
+      if (!hasPackageJson) {
+        throw new Error('package.json not found in project files');
+      }
+
+      toast({
+        title: 'Starting preview',
+        description: 'Setting up the project environment...',
+      });
       
       // Initialize WebContainer and create project
       await webContainerService.createProject(files);
@@ -48,10 +67,14 @@ export function LivePreview({ projectId, files }: LivePreviewProps) {
       // Install dependencies
       toast({
         title: 'Installing dependencies',
-        description: 'Setting up the project environment...',
+        description: 'This may take a moment...',
       });
       
-      await webContainerService.installDependencies();
+      try {
+        await webContainerService.installDependencies();
+      } catch (installError) {
+        console.warn('Dependency installation failed, continuing anyway:', installError);
+      }
       
       // Start development server
       toast({
@@ -77,11 +100,12 @@ export function LivePreview({ projectId, files }: LivePreviewProps) {
         description: 'Your application is now running!',
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to start preview:', error);
+      setError(error.message || 'Failed to start preview');
       toast({
         title: 'Preview failed',
-        description: 'Failed to start the development server',
+        description: error.message || 'Failed to start the development server',
         variant: 'destructive',
       });
     } finally {
@@ -91,7 +115,10 @@ export function LivePreview({ projectId, files }: LivePreviewProps) {
 
   const refreshPreview = () => {
     if (iframeRef.current && previewUrl) {
-      iframeRef.current.src = previewUrl + '?t=' + Date.now();
+      const refreshUrl = previewUrl.includes('?') 
+        ? `${previewUrl}&t=${Date.now()}`
+        : `${previewUrl}?t=${Date.now()}`;
+      iframeRef.current.src = refreshUrl;
     }
   };
 
@@ -128,6 +155,11 @@ export function LivePreview({ projectId, files }: LivePreviewProps) {
             {isServerRunning && (
               <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
                 Running
+              </Badge>
+            )}
+            {error && (
+              <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/20">
+                Error
               </Badge>
             )}
           </div>
@@ -188,7 +220,25 @@ export function LivePreview({ projectId, files }: LivePreviewProps) {
       </div>
 
       <div className="flex-1 p-4">
-        {!previewUrl ? (
+        {error ? (
+          <div className="h-full flex items-center justify-center border-2 border-dashed border-red-200 rounded-lg bg-red-50/50">
+            <div className="text-center">
+              <AlertCircleIcon className="h-12 w-12 mx-auto mb-4 text-red-500" />
+              <h3 className="text-lg font-semibold mb-2 text-red-700">Preview Error</h3>
+              <p className="text-red-600 mb-4 max-w-md">
+                {error}
+              </p>
+              <Button onClick={startPreview} disabled={isLoading}>
+                {isLoading ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent mr-2" />
+                ) : (
+                  <PlayIcon className="h-4 w-4 mr-2" />
+                )}
+                Try Again
+              </Button>
+            </div>
+          </div>
+        ) : !previewUrl ? (
           <div className="h-full flex items-center justify-center border-2 border-dashed border-muted-foreground/25 rounded-lg">
             <div className="text-center">
               <MonitorIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
@@ -217,7 +267,8 @@ export function LivePreview({ projectId, files }: LivePreviewProps) {
                 src={previewUrl}
                 className="w-full h-full"
                 title="Live Preview"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                onError={() => setError('Failed to load preview')}
               />
             </div>
           </div>

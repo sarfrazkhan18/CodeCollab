@@ -22,8 +22,8 @@ export class PreviewService {
 
   async createPreview(projectId: string, config: Partial<PreviewConfig>): Promise<PreviewConfig> {
     const defaultConfig: PreviewConfig = {
-      port: 3000,
-      url: '',
+      port: 3000, // Ensure we use port 3000 consistently
+      url: config.url || 'http://localhost:3000',
       framework: 'react',
       buildCommand: 'npm run build',
       startCommand: 'npm run dev',
@@ -45,7 +45,11 @@ export class PreviewService {
   refreshPreview(projectId: string): void {
     const config = this.previews.get(projectId);
     if (config && this.iframe) {
-      this.iframe.src = config.url;
+      // Add timestamp to force refresh
+      const refreshUrl = config.url.includes('?') 
+        ? `${config.url}&t=${Date.now()}`
+        : `${config.url}?t=${Date.now()}`;
+      this.iframe.src = refreshUrl;
     }
   }
 
@@ -79,10 +83,27 @@ export class PreviewService {
 
   private sendHotReloadMessage(type: string, files: string[]): void {
     if (this.iframe && this.iframe.contentWindow) {
-      this.iframe.contentWindow.postMessage({
-        type: 'hot-reload',
-        payload: { type, files }
-      }, '*');
+      try {
+        this.iframe.contentWindow.postMessage({
+          type: 'hot-reload',
+          payload: { type, files }
+        }, '*');
+      } catch (error) {
+        console.warn('Failed to send hot reload message:', error);
+      }
+    }
+  }
+
+  // Method to check if preview is available
+  async checkPreviewAvailability(url: string): Promise<boolean> {
+    try {
+      const response = await fetch(url, { 
+        method: 'HEAD',
+        mode: 'no-cors'
+      });
+      return true;
+    } catch (error) {
+      return false;
     }
   }
 }

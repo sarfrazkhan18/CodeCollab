@@ -1,10 +1,10 @@
-import { EnhancedWorkspace } from '@/components/project/enhanced-workspace';
+import { EnhancedWorkspaceV2 } from '@/components/project/enhanced-workspace-v2';
 import { AuthCheck } from '@/components/auth-check';
 
 export default function ProjectPage({ params }: { params: { id: string } }) {
   return (
     <AuthCheck>
-      <EnhancedWorkspace projectId={params.id} />
+      <EnhancedWorkspaceV2 projectId={params.id} />
     </AuthCheck>
   );
 }

@@ -1,10 +1,10 @@
-import { DashboardShell } from '@/components/dashboard/shell';
+import { EnhancedDashboardShell } from '@/components/dashboard/enhanced-shell';
 import { AuthCheck } from '@/components/auth-check';
 
 export default function Dashboard() {
   return (
     <AuthCheck>
-      <DashboardShell />
+      <EnhancedDashboardShell />
     </AuthCheck>
   );
 }

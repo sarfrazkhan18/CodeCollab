@@ -52,7 +52,7 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
     defaultValues: {
       name: '',
       description: '',
-      template: '',
+      template: 'none',
       framework: 'react',
     },
   });
@@ -67,7 +67,7 @@ export function CreateProjectDialog({ open, onOpenChange }: CreateProjectDialogP
       // Create project data
       let projectFiles = {};
       
-      if (data.template) {
+      if (data.template && data.template !== 'none') {
         // Use selected template
         const template = templateService.getTemplateById(data.template);
         if (template) {
@@ -463,7 +463,7 @@ export default function RootLayout({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Blank Project</SelectItem>
+                      <SelectItem value="none">Blank Project</SelectItem>
                       {templates.map((template) => (
                         <SelectItem key={template.id} value={template.id}>
                           {template.name}

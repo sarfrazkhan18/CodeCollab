@@ -289,7 +289,7 @@ export function CollaborationPanel({ projectId, currentFile, userId, userName }:
                             </div>
                             <div className="flex items-center gap-2">
                               {comment.resolved && (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="outline\" className="text-xs">
                                   <CheckCircleIcon className="h-3 w-3 mr-1" />
                                   Resolved
                                 </Badge>

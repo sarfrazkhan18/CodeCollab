@@ -2,22 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  CodeIcon, 
-  PanelLeftIcon, 
-  PanelRightIcon, 
-  PlayIcon,
-  SaveIcon,
-  GitBranchIcon,
-  TerminalIcon,
-  SparklesIcon,
-  MonitorIcon,
-  SettingsIcon,
-  BrainCircuitIcon,
-  UsersIcon,
-  RocketIcon,
-  TemplateIcon
-} from 'lucide-react';
+import { CodeIcon, PanelLeftIcon, PanelRightIcon, PlayIcon, SaveIcon, GitBranchIcon, TerminalIcon, SparklesIcon, MonitorIcon, SettingsIcon, BrainCircuitIcon, UsersIcon, RocketIcon, BookTemplateIcon as TemplateIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

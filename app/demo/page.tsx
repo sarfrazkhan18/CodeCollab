@@ -1,5 +1,5 @@
-import { DemoLandingPage } from '@/components/demo/landing-page';
+import { EnhancedDemoLanding } from '@/components/demo/enhanced-demo-landing';
 
 export default function DemoPage() {
-  return <DemoLandingPage />;
+  return <EnhancedDemoLanding />;
 }

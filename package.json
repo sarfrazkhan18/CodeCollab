@@ -5,7 +5,7 @@
   "scripts": {
     "predev": "node loadenv.js",
     "dev": "NEXT_DISABLE_SWC=1 next dev",
-    "build": "NEXT_DISABLE_SWC=1 next build && touch out/.nojekyll",
+    "build": "NODE_OPTIONS='--no-force-async-hooks-checks' NEXT_DISABLE_SWC=1 next build && touch out/.nojekyll",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest",

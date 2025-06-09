@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "predev": "node loadenv.js",
-    "dev": "NEXT_DISABLE_SWC=1 next dev",
-    "build": "NODE_OPTIONS='--max-old-space-size=4096 --no-force-async-hooks-checks' NEXT_DISABLE_SWC=1 next build && touch out/.nojekyll",
-    "start": "next start",
+    "dev": "next dev -p 3000",
+    "build": "NODE_OPTIONS='--max-old-space-size=4096 --no-force-async-hooks-checks' next build && touch out/.nojekyll",
+    "start": "next start -p 3000",
     "lint": "next lint",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"

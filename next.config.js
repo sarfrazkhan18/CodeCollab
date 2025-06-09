@@ -9,12 +9,31 @@ const nextConfig = {
   images: { 
     unoptimized: true 
   },
-  output: 'export',
-  trailingSlash: true,
   reactStrictMode: false,
   swcMinify: false,
   experimental: {
     esmExternals: false,
+  },
+  // Configure server options
+  async rewrites() {
+    return []
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+        ],
+      },
+    ]
   },
   webpack: (config, { isServer }) => {
     // Handle WebContainer and other browser-only dependencies

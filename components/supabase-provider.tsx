@@ -9,14 +9,14 @@ const createSupabaseClient = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Validate URL and key
-  if (!url || url === 'your-project-url' || !url.startsWith('https://')) {
-    console.error('Invalid or missing Supabase URL. Please set NEXT_PUBLIC_SUPABASE_URL in your .env file.');
+  // Check if environment variables are set to placeholder values or missing
+  if (!url || url === 'https://your-project-url.supabase.co' || !url.startsWith('https://')) {
+    console.warn('Supabase URL not configured. Running in demo mode without authentication.');
     return null;
   }
 
   if (!key || key === 'your-anon-key') {
-    console.error('Invalid or missing Supabase anon key. Please set NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env file.');
+    console.warn('Supabase anon key not configured. Running in demo mode without authentication.');
     return null;
   }
 
@@ -57,11 +57,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!supabase) {
-      toast({
-        title: 'Configuration Error',
-        description: 'Please check your Supabase configuration in the .env file.',
-        variant: 'destructive',
-      });
+      // Running in demo mode without Supabase
       setLoading(false);
       return;
     }
@@ -83,7 +79,14 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   }, [toast]);
 
   const signIn = async (email: string, password: string) => {
-    if (!supabase) throw new Error('Please configure your Supabase credentials in the .env file');
+    if (!supabase) {
+      toast({
+        title: 'Demo Mode',
+        description: 'Authentication is not available in demo mode. Configure Supabase to enable authentication.',
+        variant: 'destructive',
+      });
+      throw new Error('Supabase not configured');
+    }
     
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -100,7 +103,14 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string) => {
-    if (!supabase) throw new Error('Please configure your Supabase credentials in the .env file');
+    if (!supabase) {
+      toast({
+        title: 'Demo Mode',
+        description: 'Authentication is not available in demo mode. Configure Supabase to enable authentication.',
+        variant: 'destructive',
+      });
+      throw new Error('Supabase not configured');
+    }
     
     try {
       const { data, error } = await supabase.auth.signUp({ email, password });
@@ -117,7 +127,14 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-    if (!supabase) throw new Error('Please configure your Supabase credentials in the .env file');
+    if (!supabase) {
+      toast({
+        title: 'Demo Mode',
+        description: 'Authentication is not available in demo mode. Configure Supabase to enable authentication.',
+        variant: 'destructive',
+      });
+      throw new Error('Supabase not configured');
+    }
     
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -139,7 +156,14 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    if (!supabase) throw new Error('Please configure your Supabase credentials in the .env file');
+    if (!supabase) {
+      toast({
+        title: 'Demo Mode',
+        description: 'Authentication is not available in demo mode.',
+        variant: 'destructive',
+      });
+      throw new Error('Supabase not configured');
+    }
     
     try {
       const { error } = await supabase.auth.signOut();

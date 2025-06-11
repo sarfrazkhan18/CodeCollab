@@ -10,8 +10,16 @@ export function AuthCheck({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    // Skip auth check if Supabase is not configured (demo mode)
     if (!loading && !user && !pathname.startsWith('/auth')) {
-      router.push('/auth/login');
+      // In demo mode, allow access to all pages
+      const isSupabaseConfigured = process.env.NEXT_PUBLIC_SUPABASE_URL && 
+        process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://your-project-url.supabase.co';
+      
+      if (isSupabaseConfigured) {
+        router.push('/auth/login');
+      }
+      // If Supabase is not configured, allow access (demo mode)
     }
   }, [user, loading, router, pathname]);
 
@@ -23,9 +31,13 @@ export function AuthCheck({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user && !pathname.startsWith('/auth')) {
-    return null;
+  // In demo mode (no Supabase), allow access to all pages
+  const isSupabaseConfigured = process.env.NEXT_PUBLIC_SUPABASE_URL && 
+    process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://your-project-url.supabase.co';
+
+  if (!isSupabaseConfigured || user || pathname.startsWith('/auth')) {
+    return <>{children}</>;
   }
 
-  return <>{children}</>;
+  return null;
 }

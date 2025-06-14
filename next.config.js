@@ -10,9 +10,9 @@ const nextConfig = {
     unoptimized: true 
   },
   reactStrictMode: false,
-  swcMinify: false,
+  swcMinify: true,
   experimental: {
-    esmExternals: false,
+    esmExternals: 'loose',
   },
   // Configure server options
   async rewrites() {
@@ -35,7 +35,7 @@ const nextConfig = {
       },
     ]
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     // Handle WebContainer and other browser-only dependencies
     if (isServer) {
       config.externals = config.externals || [];
@@ -64,6 +64,35 @@ const nextConfig = {
       os: false,
       path: false,
     };
+
+    // Fix module resolution issues
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').resolve(__dirname, './'),
+    };
+
+    // Optimize chunks to prevent missing module errors
+    if (!dev && !isServer) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            default: {
+              minChunks: 1,
+              priority: -20,
+              reuseExistingChunk: true,
+            },
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              priority: -10,
+              chunks: 'all',
+            },
+          },
+        },
+      };
+    }
 
     return config;
   },

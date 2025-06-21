@@ -10,21 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  WandIcon,
-  CodeIcon,
-  FileIcon,
-  TestTubeIcon,
-  FileTextIcon,
-  SparklesIcon,
-  CopyIcon,
-  CheckIcon,
-  HookIcon,
-  ComponentIcon,
-  UtilityIcon,
-  BookOpenIcon,
-  PlayIcon
-} from 'lucide-react';
+import { WandIcon, CodeIcon, FileIcon, TestTubeIcon, FileTextIcon, SparklesIcon, CopyIcon, CheckIcon, BookIcon as HookIcon, ComponentIcon, UtilityPoleIcon as UtilityIcon, BookOpenIcon, PlayIcon } from 'lucide-react';
 import { agentService } from '@/lib/ai/agents';
 import { useToast } from '@/hooks/use-toast';
 

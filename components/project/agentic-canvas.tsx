@@ -300,7 +300,7 @@ export function AgenticCanvas({
     { id: 'generate-component', title: 'Generate Component', action: () => generateCode('Generate a new React component'), icon: <CodeIcon className="h-4 w-4" /> },
     { id: 'create-test', title: 'Create Tests', action: () => generateCode('Create test files'), icon: <BugIcon className="h-4 w-4" /> },
     { id: 'optimize-code', title: 'Optimize Code', action: () => generateCode('Optimize current code for performance'), icon: <ZapIcon className="h-4 w-4" /> },
-    { id: 'add-documentation', title: 'Add Documentation', action: () => generateCode('Add documentation to the code'), icon: <BookTemplateIcon className="h-4 w-4" /> },
+    { id: 'add-documentation', title: 'Add Documentation', action: () => generateCode('Add documentation to the code'), icon: <TemplateIcon className="h-4 w-4" /> },
     { id: 'switch-to-files', title: 'Go to Files', action: () => setLeftPanelTab('files'), icon: <FolderIcon className="h-4 w-4" /> },
     { id: 'switch-to-preview', title: 'Show Preview', action: () => setRightPanelTab('preview'), icon: <MonitorIcon className="h-4 w-4" /> },
     { id: 'toggle-ai-assistant', title: 'Toggle AI Assistant', action: () => setShowAIAssistant(!showAIAssistant), icon: <BrainCircuitIcon className="h-4 w-4" /> },

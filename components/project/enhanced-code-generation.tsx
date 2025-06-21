@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { WandIcon, CodeIcon, FileIcon, TestTubeIcon, FileTextIcon, SparklesIcon, CopyIcon, CheckIcon, ComponentIcon, UtilityPoleIcon as UtilityIcon, BookOpenIcon, PlayIcon } from 'lucide-react';
+import { WandIcon, CodeIcon, FileIcon, TestTubeIcon, FileTextIcon, SparklesIcon, CopyIcon, CheckIcon, BookOpenIcon, PlayIcon } from 'lucide-react';
 import { agentService } from '@/lib/ai/agents';
 import { useToast } from '@/hooks/use-toast';
 
@@ -71,7 +71,7 @@ const CODE_TYPES: Record<CodeType, CodeTypeConfig> = {
   component: {
     label: 'React Component',
     description: 'UI components with props and state',
-    icon: <CodeIcon className="h-4 w-4" />,
+    icon: <CustomComponentIcon className="h-4 w-4" />,
     defaultPath: 'components',
     extension: 'tsx',
     agentId: 'frontend-specialist',

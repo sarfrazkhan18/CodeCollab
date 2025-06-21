@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
   BrainCircuitIcon,
   AlertTriangleIcon,
@@ -18,7 +19,10 @@ import {
   ShieldIcon,
   ZapIcon,
   RefreshCwIcon,
-  WandIcon
+  WandIcon,
+  BugIcon,
+  PerformanceIcon as SpeedIcon,
+  CodeIcon
 } from 'lucide-react';
 import { codeAnalyzer, CodeMetrics, CodeIssue, CodeInsight } from '@/lib/intelligence/code-analyzer';
 import { useToast } from '@/hooks/use-toast';
@@ -37,10 +41,12 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
   const [refactoredCode, setRefactoredCode] = useState<string>('');
   const [refactorExplanation, setRefactorExplanation] = useState<string>('');
   const [documentation, setDocumentation] = useState<string>('');
+  const [lastAnalyzedFile, setLastAnalyzedFile] = useState<string | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (currentFile && code) {
+    if (currentFile && code && currentFile !== lastAnalyzedFile) {
       analyzeCode();
     }
   }, [currentFile, code]);
@@ -50,20 +56,24 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
 
     try {
       setIsAnalyzing(true);
+      setAnalysisError(null);
+      
       const analysis = await codeAnalyzer.analyzeCode(code, language, currentFile);
       
       setMetrics(analysis.metrics);
       setIssues(analysis.issues);
       setInsights(analysis.insights);
+      setLastAnalyzedFile(currentFile);
       
       toast({
         title: 'Code analysis complete',
         description: `Found ${analysis.issues.length} issues and ${analysis.insights.suggestions.length} suggestions`,
       });
-    } catch (error) {
+    } catch (error: any) {
+      setAnalysisError(error.message || 'Analysis failed');
       toast({
         title: 'Analysis failed',
-        description: 'Failed to analyze code. Please try again.',
+        description: 'Please check your AI API configuration or try again later.',
         variant: 'destructive',
       });
     } finally {
@@ -85,10 +95,10 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
         title: 'Refactoring suggestions ready',
         description: 'AI has generated improved code with explanations',
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Refactoring failed',
-        description: 'Failed to generate refactoring suggestions',
+        description: error.message || 'Failed to generate refactoring suggestions',
         variant: 'destructive',
       });
     } finally {
@@ -108,10 +118,10 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
         title: 'Documentation generated',
         description: 'AI has created comprehensive documentation for your code',
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Documentation generation failed',
-        description: 'Failed to generate documentation',
+        description: error.message || 'Failed to generate documentation',
         variant: 'destructive',
       });
     } finally {
@@ -140,14 +150,29 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
     return 'text-red-500';
   };
 
+  const getMetricIcon = (metric: string) => {
+    switch (metric) {
+      case 'complexity':
+        return <BrainCircuitIcon className="h-4 w-4" />;
+      case 'performance':
+        return <ZapIcon className="h-4 w-4" />;
+      case 'security':
+        return <ShieldIcon className="h-4 w-4" />;
+      case 'testCoverage':
+        return <CheckCircleIcon className="h-4 w-4" />;
+      default:
+        return <TrendingUpIcon className="h-4 w-4" />;
+    }
+  };
+
   if (!currentFile) {
     return (
       <div className="h-full flex items-center justify-center p-8 text-center">
         <div>
           <BrainCircuitIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-          <h3 className="text-lg font-semibold mb-2">Code Intelligence</h3>
-          <p className="text-muted-foreground">
-            Select a file to analyze code quality, get suggestions, and generate documentation
+          <h3 className="text-lg font-semibold mb-2">AI Code Assistant</h3>
+          <p className="text-muted-foreground text-sm">
+            Select a file to analyze code quality, detect bugs, and get performance optimization suggestions
           </p>
         </div>
       </div>
@@ -160,7 +185,7 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
         <div className="flex items-center justify-between">
           <h3 className="font-semibold flex items-center gap-2">
             <BrainCircuitIcon className="h-5 w-5 text-primary" />
-            Code Intelligence
+            AI Code Assistant
           </h3>
           <div className="flex gap-2">
             <Button
@@ -170,7 +195,7 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
               disabled={isAnalyzing}
             >
               <RefreshCwIcon className="h-4 w-4 mr-2" />
-              Analyze
+              {isAnalyzing ? 'Analyzing...' : 'Analyze'}
             </Button>
             <Button
               variant="outline"
@@ -186,12 +211,23 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
         <p className="text-sm text-muted-foreground mt-1">
           Analyzing: {currentFile}
         </p>
+        {analysisError && (
+          <Alert className="mt-2" variant="destructive">
+            <AlertTriangleIcon className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              {analysisError}
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
 
       <Tabs defaultValue="metrics" className="flex-1 flex flex-col">
         <TabsList className="grid w-full grid-cols-4 mx-4 mt-2">
-          <TabsTrigger value="metrics">Metrics</TabsTrigger>
-          <TabsTrigger value="issues">Issues</TabsTrigger>
+          <TabsTrigger value="metrics">Quality</TabsTrigger>
+          <TabsTrigger value="issues">
+            <BugIcon className="h-3 w-3 mr-1" />
+            Issues
+          </TabsTrigger>
           <TabsTrigger value="insights">Insights</TabsTrigger>
           <TabsTrigger value="refactor">Refactor</TabsTrigger>
         </TabsList>
@@ -210,65 +246,84 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
             <div className="space-y-4">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Code Quality Metrics</CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <TrendingUpIcon className="h-5 w-5 text-primary" />
+                    Code Quality Metrics
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Complexity</span>
-                      <span className={`text-sm font-bold ${getMetricColor(metrics.complexity)}`}>
-                        {metrics.complexity}/100
-                      </span>
+                  {Object.entries(metrics).map(([key, value]) => (
+                    <div key={key} className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium flex items-center gap-2">
+                          {getMetricIcon(key)}
+                          {key === 'testCoverage' ? 'Test Coverage' : 
+                           key.charAt(0).toUpperCase() + key.slice(1)}
+                        </span>
+                        <span className={`text-sm font-bold ${getMetricColor(value)}`}>
+                          {value}/100
+                        </span>
+                      </div>
+                      <Progress 
+                        value={value} 
+                        className="h-2" 
+                        style={{
+                          '--progress-foreground': value >= 80 ? 'hsl(142, 76%, 36%)' : 
+                                                 value >= 60 ? 'hsl(45, 93%, 47%)' : 
+                                                 'hsl(0, 84%, 60%)'
+                        } as React.CSSProperties}
+                      />
                     </div>
-                    <Progress value={metrics.complexity} className="h-2" />
-                  </div>
+                  ))}
+                </CardContent>
+              </Card>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Maintainability</span>
-                      <span className={`text-sm font-bold ${getMetricColor(metrics.maintainability)}`}>
-                        {metrics.maintainability}/100
-                      </span>
-                    </div>
-                    <Progress value={metrics.maintainability} className="h-2" />
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Performance</span>
-                      <span className={`text-sm font-bold ${getMetricColor(metrics.performance)}`}>
-                        {metrics.performance}/100
-                      </span>
-                    </div>
-                    <Progress value={metrics.performance} className="h-2" />
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Security</span>
-                      <span className={`text-sm font-bold ${getMetricColor(metrics.security)}`}>
-                        {metrics.security}/100
-                      </span>
-                    </div>
-                    <Progress value={metrics.security} className="h-2" />
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Test Coverage</span>
-                      <span className={`text-sm font-bold ${getMetricColor(metrics.testCoverage)}`}>
-                        {metrics.testCoverage}/100
-                      </span>
-                    </div>
-                    <Progress value={metrics.testCoverage} className="h-2" />
-                  </div>
+              {/* Quick Actions Based on Metrics */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {metrics.complexity > 80 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={handleRefactor}
+                    >
+                      <BrainCircuitIcon className="h-4 w-4 mr-2" />
+                      Reduce Complexity
+                    </Button>
+                  )}
+                  {metrics.performance < 70 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={handleRefactor}
+                    >
+                      <ZapIcon className="h-4 w-4 mr-2" />
+                      Optimize Performance
+                    </Button>
+                  )}
+                  {metrics.testCoverage < 50 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => toast({ title: 'Feature coming soon', description: 'Test generation will be available in the next update' })}
+                    >
+                      <CheckCircleIcon className="h-4 w-4 mr-2" />
+                      Generate Tests
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </div>
           ) : (
             <div className="text-center py-8">
               <TrendingUpIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <p className="text-muted-foreground">Click "Analyze" to see code metrics</p>
+              <p className="text-muted-foreground">Click "Analyze" to see code quality metrics</p>
             </div>
           )}
         </TabsContent>
@@ -278,23 +333,33 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
             {issues.length > 0 ? (
               <div className="space-y-3">
                 {issues.map((issue) => (
-                  <Card key={issue.id}>
+                  <Card key={issue.id} className={`border-l-4 ${
+                    issue.severity === 'critical' ? 'border-l-red-500' :
+                    issue.severity === 'high' ? 'border-l-orange-500' :
+                    issue.severity === 'medium' ? 'border-l-yellow-500' :
+                    'border-l-blue-500'
+                  }`}>
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         {getIssueIcon(issue.type)}
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium">{issue.message}</span>
+                            <span className="font-medium text-sm">{issue.message}</span>
                             <Badge variant="outline" className="text-xs">
                               {issue.severity}
                             </Badge>
+                            {issue.fixable && (
+                              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-500 border-green-500/20">
+                                Fixable
+                              </Badge>
+                            )}
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            Line {issue.line}, Column {issue.column}
+                          <p className="text-xs text-muted-foreground">
+                            Line {issue.line}, Column {issue.column} • {issue.rule}
                           </p>
                           {issue.suggestedFix && (
-                            <div className="mt-2 p-2 bg-muted rounded text-sm">
-                              <strong>Suggested fix:</strong> {issue.suggestedFix}
+                            <div className="mt-2 p-2 bg-muted rounded text-xs">
+                              <strong>💡 Suggested fix:</strong> {issue.suggestedFix}
                             </div>
                           )}
                         </div>
@@ -303,10 +368,20 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
                   </Card>
                 ))}
               </div>
+            ) : isAnalyzing ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse border rounded-lg p-4">
+                    <div className="h-4 bg-muted rounded mb-2"></div>
+                    <div className="h-3 bg-muted rounded w-2/3"></div>
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="text-center py-8">
                 <CheckCircleIcon className="h-12 w-12 mx-auto mb-4 text-green-500 opacity-50" />
-                <p className="text-muted-foreground">No issues found in your code!</p>
+                <h3 className="font-semibold mb-2">No issues found!</h3>
+                <p className="text-muted-foreground text-sm">Your code looks clean and follows best practices.</p>
               </div>
             )}
           </ScrollArea>
@@ -321,13 +396,16 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm flex items-center gap-2">
                         <CheckCircleIcon className="h-4 w-4 text-green-500" />
-                        Good Patterns
+                        Good Patterns Found
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-1">
                         {insights.patterns.map((pattern, i) => (
-                          <li key={i} className="text-sm">{pattern}</li>
+                          <li key={i} className="text-sm flex items-center gap-2">
+                            <div className="w-1 h-1 rounded-full bg-green-500" />
+                            {pattern}
+                          </li>
                         ))}
                       </ul>
                     </CardContent>
@@ -339,13 +417,16 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm flex items-center gap-2">
                         <LightbulbIcon className="h-4 w-4 text-yellow-500" />
-                        Suggestions
+                        Improvement Suggestions
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-1">
                         {insights.suggestions.map((suggestion, i) => (
-                          <li key={i} className="text-sm">{suggestion}</li>
+                          <li key={i} className="text-sm flex items-center gap-2">
+                            <div className="w-1 h-1 rounded-full bg-yellow-500" />
+                            {suggestion}
+                          </li>
                         ))}
                       </ul>
                     </CardContent>
@@ -357,13 +438,16 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm flex items-center gap-2">
                         <ZapIcon className="h-4 w-4 text-blue-500" />
-                        Performance Improvements
+                        Performance Optimizations
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-1">
                         {insights.performanceImprovements.map((improvement, i) => (
-                          <li key={i} className="text-sm">{improvement}</li>
+                          <li key={i} className="text-sm flex items-center gap-2">
+                            <div className="w-1 h-1 rounded-full bg-blue-500" />
+                            {improvement}
+                          </li>
                         ))}
                       </ul>
                     </CardContent>
@@ -375,15 +459,49 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm flex items-center gap-2">
                         <ShieldIcon className="h-4 w-4 text-red-500" />
-                        Security Concerns
+                        Security Recommendations
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-1">
                         {insights.securityConcerns.map((concern, i) => (
-                          <li key={i} className="text-sm">{concern}</li>
+                          <li key={i} className="text-sm flex items-center gap-2">
+                            <div className="w-1 h-1 rounded-full bg-red-500" />
+                            {concern}
+                          </li>
                         ))}
                       </ul>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {insights.refactoringOpportunities.length > 0 && (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <WandIcon className="h-4 w-4 text-purple-500" />
+                        Refactoring Opportunities
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-1 mb-3">
+                        {insights.refactoringOpportunities.map((opportunity, i) => (
+                          <li key={i} className="text-sm flex items-center gap-2">
+                            <div className="w-1 h-1 rounded-full bg-purple-500" />
+                            {opportunity}
+                          </li>
+                        ))}
+                      </ul>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRefactor}
+                        disabled={isAnalyzing}
+                        className="w-full"
+                      >
+                        <WandIcon className="h-4 w-4 mr-2" />
+                        Get Refactoring Suggestions
+                      </Button>
                     </CardContent>
                   </Card>
                 )}
@@ -391,7 +509,7 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
             ) : (
               <div className="text-center py-8">
                 <LightbulbIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground">Analyze your code to see insights</p>
+                <p className="text-muted-foreground">Analyze your code to see detailed insights</p>
               </div>
             )}
           </ScrollArea>
@@ -400,13 +518,14 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
         <TabsContent value="refactor" className="flex-1 p-4">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h4 className="font-medium">AI Refactoring Suggestions</h4>
+              <h4 className="font-medium">AI Refactoring Assistant</h4>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleGenerateDocumentation}
                 disabled={isAnalyzing}
               >
+                <CodeIcon className="h-4 w-4 mr-2" />
                 Generate Docs
               </Button>
             </div>
@@ -419,7 +538,7 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
                     <CardDescription>{refactorExplanation}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
+                    <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm code-font">
                       <code>{refactoredCode}</code>
                     </pre>
                   </CardContent>
@@ -432,7 +551,7 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
                     </CardHeader>
                     <CardContent>
                       <div className="prose prose-sm max-w-none">
-                        <pre className="whitespace-pre-wrap text-sm">{documentation}</pre>
+                        <pre className="whitespace-pre-wrap text-sm code-font">{documentation}</pre>
                       </div>
                     </CardContent>
                   </Card>
@@ -441,10 +560,20 @@ export function CodeIntelligencePanel({ currentFile, code, language }: CodeIntel
             ) : (
               <div className="text-center py-8">
                 <WandIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground mb-4">
-                  Click "Refactor" to get AI-powered code improvements
+                <h3 className="font-semibold mb-2">AI-Powered Refactoring</h3>
+                <p className="text-muted-foreground mb-4 text-sm">
+                  Get intelligent code improvements, performance optimizations, and best practice suggestions
                 </p>
-                <Button onClick={handleRefactor} disabled={isAnalyzing}>
+                <Button onClick={handleRefactor} disabled={isAnalyzing} size="lg">
+                  {isAnalyzing ? (
+                    <div className="loading-dots mr-2">
+                      <div style={{'--i': 0} as React.CSSProperties}></div>
+                      <div style={{'--i': 1} as React.CSSProperties}></div>
+                      <div style={{'--i': 2} as React.CSSProperties}></div>
+                    </div>
+                  ) : (
+                    <WandIcon className="h-4 w-4 mr-2" />
+                  )}
                   {isAnalyzing ? 'Analyzing...' : 'Generate Refactoring Suggestions'}
                 </Button>
               </div>

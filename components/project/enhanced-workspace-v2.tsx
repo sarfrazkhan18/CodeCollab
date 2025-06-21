@@ -173,16 +173,84 @@ export function EnhancedWorkspaceV2({ projectId }: EnhancedWorkspaceV2Props) {
         ...prev,
         [currentFile]: newCode
       }));
+      saveProjectFiles({
+        ...projectFiles,
+        [currentFile]: newCode
+      });
     }
   };
 
   const handleCodeGenerated = (code: string, filePath: string) => {
-    setProjectFiles(prev => ({
-      ...prev,
+    const updatedFiles = {
+      ...projectFiles,
       [filePath]: code
-    }));
+    };
+    setProjectFiles(updatedFiles);
     setCurrentFile(filePath);
     setCurrentCode(code);
+    saveProjectFiles(updatedFiles);
+  };
+
+  const handleFileCreated = (filePath: string, content: string) => {
+    const updatedFiles = {
+      ...projectFiles,
+      [filePath]: content
+    };
+    setProjectFiles(updatedFiles);
+    saveProjectFiles(updatedFiles);
+    
+    // Auto-select the new file
+    setCurrentFile(filePath);
+    setCurrentCode(content);
+  };
+
+  const handleFileDeleted = (filePath: string) => {
+    const updatedFiles = { ...projectFiles };
+    delete updatedFiles[filePath];
+    setProjectFiles(updatedFiles);
+    saveProjectFiles(updatedFiles);
+    
+    // If the deleted file was currently open, close it
+    if (currentFile === filePath) {
+      const remainingFiles = Object.keys(updatedFiles);
+      if (remainingFiles.length > 0) {
+        setCurrentFile(remainingFiles[0]);
+        setCurrentCode(updatedFiles[remainingFiles[0]] || '');
+      } else {
+        setCurrentFile(null);
+        setCurrentCode('');
+      }
+    }
+  };
+
+  const handleFileRenamed = (oldPath: string, newPath: string) => {
+    const updatedFiles = { ...projectFiles };
+    const content = updatedFiles[oldPath];
+    delete updatedFiles[oldPath];
+    updatedFiles[newPath] = content;
+    setProjectFiles(updatedFiles);
+    saveProjectFiles(updatedFiles);
+    
+    // If the renamed file was currently open, update the current file path
+    if (currentFile === oldPath) {
+      setCurrentFile(newPath);
+    }
+  };
+
+  const saveProjectFiles = (files: Record<string, string>) => {
+    if (!project) return;
+    
+    try {
+      const storedProjects = JSON.parse(localStorage.getItem('codecollab_projects') || '[]');
+      const updatedProjects = storedProjects.map((p: Project) => 
+        p.id === project.id 
+          ? { ...p, files, updated_at: new Date().toISOString() }
+          : p
+      );
+      localStorage.setItem('codecollab_projects', JSON.stringify(updatedProjects));
+    } catch (error) {
+      console.error('Error saving project files:', error);
+    }
   };
 
   const handleTemplateSelect = async (template: ProjectTemplate) => {
@@ -197,6 +265,8 @@ export function EnhancedWorkspaceV2({ projectId }: EnhancedWorkspaceV2Props) {
       if (mainFile) {
         handleFileSelect(mainFile);
       }
+      
+      saveProjectFiles(projectData.files);
       
       toast({
         title: 'Template applied',
@@ -266,6 +336,9 @@ export function EnhancedWorkspaceV2({ projectId }: EnhancedWorkspaceV2Props) {
       onFileSelect={handleFileSelect}
       onCodeChange={handleCodeChange}
       onCodeGenerated={handleCodeGenerated}
+      onFileCreated={handleFileCreated}
+      onFileDeleted={handleFileDeleted}
+      onFileRenamed={handleFileRenamed}
     />
   );
 }

@@ -12,19 +12,29 @@ import {
   SearchIcon, 
   PlusIcon,
   FolderPlusIcon,
-  FilePlusIcon
+  FilePlusIcon,
+  TrashIcon,
+  EditIcon,
+  CheckIcon,
+  XIcon
 } from 'lucide-react';
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
+  ContextMenuSeparator,
 } from '@/components/ui/context-menu';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 interface FileExplorerProps {
   onSelectFile: (filePath: string) => void;
   files?: Record<string, string>;
   currentFile?: string | null;
+  onFileCreated?: (filePath: string, content: string) => void;
+  onFileDeleted?: (filePath: string) => void;
+  onFileRenamed?: (oldPath: string, newPath: string) => void;
 }
 
 interface FileNode {
@@ -36,9 +46,21 @@ interface FileNode {
   expanded?: boolean;
 }
 
-export function FileExplorer({ onSelectFile, files = {}, currentFile }: FileExplorerProps) {
+export function FileExplorer({ 
+  onSelectFile, 
+  files = {}, 
+  currentFile,
+  onFileCreated,
+  onFileDeleted,
+  onFileRenamed
+}: FileExplorerProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [fileStructure, setFileStructure] = useState<FileNode[]>([]);
+  const [creatingItem, setCreatingItem] = useState<{ parentPath: string; type: 'file' | 'folder' } | null>(null);
+  const [newItemName, setNewItemName] = useState('');
+  const [renamingItem, setRenamingItem] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const { toast } = useToast();
 
   useEffect(() => {
     if (Object.keys(files).length > 0) {
@@ -159,6 +181,151 @@ export function FileExplorer({ onSelectFile, files = {}, currentFile }: FileExpl
     });
   };
 
+  const startCreating = (parentPath: string, type: 'file' | 'folder') => {
+    setCreatingItem({ parentPath, type });
+    setNewItemName('');
+  };
+
+  const startRenaming = (node: FileNode) => {
+    setRenamingItem(node.path);
+    setRenameValue(node.name);
+  };
+
+  const confirmCreate = () => {
+    if (!newItemName.trim() || !creatingItem) return;
+
+    const extension = creatingItem.type === 'file' && !newItemName.includes('.') 
+      ? getDefaultExtension(newItemName) 
+      : '';
+    
+    const fullName = newItemName + extension;
+    const newPath = creatingItem.parentPath 
+      ? `${creatingItem.parentPath}/${fullName}`
+      : fullName;
+
+    if (creatingItem.type === 'file') {
+      const defaultContent = getDefaultFileContent(newPath);
+      onFileCreated?.(newPath, defaultContent);
+      toast({
+        title: 'File created',
+        description: `Created ${newPath}`,
+      });
+    } else {
+      // For folders, create a placeholder file to establish the folder structure
+      const placeholderPath = `${newPath}/.gitkeep`;
+      onFileCreated?.(placeholderPath, '');
+      toast({
+        title: 'Folder created',
+        description: `Created ${newPath}`,
+      });
+    }
+
+    setCreatingItem(null);
+    setNewItemName('');
+  };
+
+  const confirmRename = () => {
+    if (!renameValue.trim() || !renamingItem) return;
+
+    const pathParts = renamingItem.split('/');
+    pathParts[pathParts.length - 1] = renameValue;
+    const newPath = pathParts.join('/');
+
+    onFileRenamed?.(renamingItem, newPath);
+    
+    toast({
+      title: 'File renamed',
+      description: `Renamed to ${newPath}`,
+    });
+
+    setRenamingItem(null);
+    setRenameValue('');
+  };
+
+  const deleteItem = (path: string) => {
+    onFileDeleted?.(path);
+    toast({
+      title: 'File deleted',
+      description: `Deleted ${path}`,
+    });
+  };
+
+  const getDefaultExtension = (name: string): string => {
+    const lowercaseName = name.toLowerCase();
+    if (lowercaseName.includes('component') || lowercaseName.includes('page')) return '.tsx';
+    if (lowercaseName.includes('hook')) return '.ts';
+    if (lowercaseName.includes('util') || lowercaseName.includes('helper')) return '.ts';
+    if (lowercaseName.includes('style')) return '.css';
+    if (lowercaseName.includes('test')) return '.test.ts';
+    if (lowercaseName.includes('config')) return '.js';
+    return '.tsx'; // Default to .tsx for React components
+  };
+
+  const getDefaultFileContent = (path: string): string => {
+    const fileName = path.split('/').pop() || '';
+    const baseName = fileName.split('.')[0];
+    
+    if (path.endsWith('.tsx')) {
+      const componentName = baseName.charAt(0).toUpperCase() + baseName.slice(1);
+      return `export default function ${componentName}() {
+  return (
+    <div>
+      <h1>${componentName}</h1>
+      <p>Component created with CodeCollab AI</p>
+    </div>
+  );
+}`;
+    }
+    
+    if (path.endsWith('.ts')) {
+      if (fileName.includes('hook')) {
+        return `import { useState } from 'react';
+
+export function use${baseName.charAt(0).toUpperCase() + baseName.slice(1)}() {
+  const [state, setState] = useState();
+
+  return {
+    state,
+    setState,
+  };
+}`;
+      }
+      return `// ${fileName}\n\nexport default {};`;
+    }
+    
+    if (path.endsWith('.css')) {
+      return `/* Styles for ${baseName} */\n\n.${baseName} {\n  /* Add your styles here */\n}`;
+    }
+    
+    if (path.endsWith('.md')) {
+      return `# ${baseName.charAt(0).toUpperCase() + baseName.slice(1)}\n\nDocumentation for ${baseName}.`;
+    }
+    
+    if (path.endsWith('.json')) {
+      return '{\n  \n}';
+    }
+    
+    return `// ${fileName}\n`;
+  };
+
+  const getFileIcon = (fileName: string) => {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    const colors = {
+      tsx: 'text-blue-500',
+      ts: 'text-blue-600',
+      js: 'text-yellow-500',
+      jsx: 'text-blue-400',
+      css: 'text-pink-500',
+      scss: 'text-pink-600',
+      html: 'text-orange-500',
+      json: 'text-green-500',
+      md: 'text-gray-600',
+      txt: 'text-gray-500',
+    };
+    
+    return <FileIcon className={`h-4 w-4 ${colors[ext as keyof typeof colors] || 'text-gray-400'}`} />;
+  };
+
   const filterNodes = (nodes: FileNode[], query: string): FileNode[] => {
     if (!query) return nodes;
     
@@ -182,7 +349,7 @@ export function FileExplorer({ onSelectFile, files = {}, currentFile }: FileExpl
     });
   };
 
-  const renderFileTree = (nodes: FileNode[]) => {
+  const renderFileTree = (nodes: FileNode[], level: number = 0) => {
     const filteredNodes = filterNodes(nodes, searchQuery);
     
     return filteredNodes.map(node => {
@@ -193,6 +360,7 @@ export function FileExplorer({ onSelectFile, files = {}, currentFile }: FileExpl
               <ContextMenuTrigger>
                 <div 
                   className="flex items-center py-1 px-2 cursor-pointer hover:bg-accent rounded-sm group"
+                  style={{ paddingLeft: `${level * 16 + 8}px` }}
                   onClick={() => toggleFolder(node.id)}
                 >
                   <div className="mr-1">
@@ -202,21 +370,84 @@ export function FileExplorer({ onSelectFile, files = {}, currentFile }: FileExpl
                       <ChevronRightIcon className="h-4 w-4 text-muted-foreground" />
                     )}
                   </div>
-                  <FolderIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm">{node.name}</span>
+                  <FolderIcon className="h-4 w-4 mr-2 text-blue-500" />
+                  <span className="text-sm flex-1">{node.name}</span>
+                  <Badge variant="outline" className="opacity-0 group-hover:opacity-100 text-xs">
+                    {node.children?.length || 0}
+                  </Badge>
                 </div>
               </ContextMenuTrigger>
               <ContextMenuContent className="w-48">
-                <ContextMenuItem className="flex items-center text-sm">
+                <ContextMenuItem 
+                  className="flex items-center text-sm"
+                  onClick={() => startCreating(node.path, 'file')}
+                >
                   <FilePlusIcon className="h-4 w-4 mr-2" /> New File
                 </ContextMenuItem>
-                <ContextMenuItem className="flex items-center text-sm">
+                <ContextMenuItem 
+                  className="flex items-center text-sm"
+                  onClick={() => startCreating(node.path, 'folder')}
+                >
                   <FolderPlusIcon className="h-4 w-4 mr-2" /> New Folder
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem 
+                  className="flex items-center text-sm"
+                  onClick={() => startRenaming(node)}
+                >
+                  <EditIcon className="h-4 w-4 mr-2" /> Rename
+                </ContextMenuItem>
+                <ContextMenuItem 
+                  className="flex items-center text-sm text-red-600"
+                  onClick={() => deleteItem(node.path)}
+                >
+                  <TrashIcon className="h-4 w-4 mr-2" /> Delete
                 </ContextMenuItem>
               </ContextMenuContent>
             </ContextMenu>
+            
+            {/* Create new item input */}
+            {creatingItem?.parentPath === node.path && (
+              <div className="flex items-center py-1 px-2 ml-5" style={{ paddingLeft: `${(level + 1) * 16 + 8}px` }}>
+                <div className="mr-1 w-4" />
+                {creatingItem.type === 'file' ? (
+                  <FileIcon className="h-4 w-4 mr-2 text-green-500" />
+                ) : (
+                  <FolderIcon className="h-4 w-4 mr-2 text-green-500" />
+                )}
+                <Input
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') confirmCreate();
+                    if (e.key === 'Escape') setCreatingItem(null);
+                  }}
+                  onBlur={confirmCreate}
+                  placeholder={creatingItem.type === 'file' ? 'filename' : 'folder name'}
+                  className="h-6 text-sm px-1"
+                  autoFocus
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6 ml-1"
+                  onClick={confirmCreate}
+                >
+                  <CheckIcon className="h-3 w-3" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6"
+                  onClick={() => setCreatingItem(null)}
+                >
+                  <XIcon className="h-3 w-3" />
+                </Button>
+              </div>
+            )}
+            
             {node.expanded && node.children && (
-              <div className="pl-5">{renderFileTree(node.children)}</div>
+              <div>{renderFileTree(node.children, level + 1)}</div>
             )}
           </div>
         );
@@ -226,21 +457,66 @@ export function FileExplorer({ onSelectFile, files = {}, currentFile }: FileExpl
         <ContextMenu key={node.id}>
           <ContextMenuTrigger>
             <div 
-              className={`flex items-center py-1 px-2 cursor-pointer hover:bg-accent rounded-sm group ml-5 ${
+              className={`flex items-center py-1 px-2 cursor-pointer hover:bg-accent rounded-sm group ${
                 currentFile === node.path ? 'bg-accent' : ''
               }`}
+              style={{ paddingLeft: `${level * 16 + 24}px` }}
               onClick={() => onSelectFile(node.path)}
             >
-              <FileIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-              <span className="text-sm">{node.name}</span>
+              {renamingItem === node.path ? (
+                <>
+                  {getFileIcon(node.name)}
+                  <Input
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') confirmRename();
+                      if (e.key === 'Escape') setRenamingItem(null);
+                    }}
+                    onBlur={confirmRename}
+                    className="h-6 text-sm px-1 ml-2 flex-1"
+                    autoFocus
+                  />
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6 ml-1"
+                    onClick={confirmRename}
+                  >
+                    <CheckIcon className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6"
+                    onClick={() => setRenamingItem(null)}
+                  >
+                    <XIcon className="h-3 w-3" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {getFileIcon(node.name)}
+                  <span className="text-sm ml-2 flex-1">{node.name}</span>
+                  {currentFile === node.path && (
+                    <div className="w-2 h-2 rounded-full bg-primary ml-2" />
+                  )}
+                </>
+              )}
             </div>
           </ContextMenuTrigger>
           <ContextMenuContent className="w-48">
-            <ContextMenuItem className="flex items-center text-sm">
-              Rename
+            <ContextMenuItem 
+              className="flex items-center text-sm"
+              onClick={() => startRenaming(node)}
+            >
+              <EditIcon className="h-4 w-4 mr-2" /> Rename
             </ContextMenuItem>
-            <ContextMenuItem className="flex items-center text-sm text-red-500">
-              Delete
+            <ContextMenuItem 
+              className="flex items-center text-sm text-red-600"
+              onClick={() => deleteItem(node.path)}
+            >
+              <TrashIcon className="h-4 w-4 mr-2" /> Delete
             </ContextMenuItem>
           </ContextMenuContent>
         </ContextMenu>
@@ -250,23 +526,86 @@ export function FileExplorer({ onSelectFile, files = {}, currentFile }: FileExpl
 
   return (
     <div className="flex h-full flex-col">
-      <div className="p-2 border-b flex items-center gap-2">
-        <div className="relative flex-1">
+      <div className="p-3 border-b space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-sm">Explorer</h3>
+          <div className="flex gap-1">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => startCreating('', 'file')}
+              title="New File"
+            >
+              <FilePlusIcon className="h-3 w-3" />
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => startCreating('', 'folder')}
+              title="New Folder"
+            >
+              <FolderPlusIcon className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+        
+        <div className="relative">
           <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Search files..."
-            className="w-full pl-8"
+            className="w-full pl-8 h-8"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Button variant="ghost" size="icon" title="New File">
-          <PlusIcon className="h-4 w-4" />
-        </Button>
       </div>
-      <ScrollArea className="flex-1 p-2">
-        <div className="space-y-1">{renderFileTree(fileStructure)}</div>
+      
+      <ScrollArea className="flex-1">
+        <div className="p-2">
+          {/* Create new item at root level */}
+          {creatingItem?.parentPath === '' && (
+            <div className="flex items-center py-1 px-2 mb-2">
+              {creatingItem.type === 'file' ? (
+                <FileIcon className="h-4 w-4 mr-2 text-green-500" />
+              ) : (
+                <FolderIcon className="h-4 w-4 mr-2 text-green-500" />
+              )}
+              <Input
+                value={newItemName}
+                onChange={(e) => setNewItemName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') confirmCreate();
+                  if (e.key === 'Escape') setCreatingItem(null);
+                }}
+                onBlur={confirmCreate}
+                placeholder={creatingItem.type === 'file' ? 'filename' : 'folder name'}
+                className="h-6 text-sm px-1"
+                autoFocus
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6 ml-1"
+                onClick={confirmCreate}
+              >
+                <CheckIcon className="h-3 w-3" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6"
+                onClick={() => setCreatingItem(null)}
+              >
+                <XIcon className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
+          
+          <div className="space-y-1">{renderFileTree(fileStructure)}</div>
+        </div>
       </ScrollArea>
     </div>
   );

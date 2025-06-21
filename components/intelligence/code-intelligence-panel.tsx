@@ -9,21 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  BrainCircuitIcon,
-  AlertTriangleIcon,
-  CheckCircleIcon,
-  InfoIcon,
-  LightbulbIcon,
-  TrendingUpIcon,
-  ShieldIcon,
-  ZapIcon,
-  RefreshCwIcon,
-  WandIcon,
-  BugIcon,
-  PerformanceIcon as SpeedIcon,
-  CodeIcon
-} from 'lucide-react';
+import { BrainCircuitIcon, AlertTriangleIcon, CheckCircleIcon, InfoIcon, LightbulbIcon, TrendingUpIcon, ShieldIcon, ZapIcon, RefreshCwIcon, WandIcon, BugIcon, FenceIcon as SpeedIcon, CodeIcon } from 'lucide-react';
 import { codeAnalyzer, CodeMetrics, CodeIssue, CodeInsight } from '@/lib/intelligence/code-analyzer';
 import { useToast } from '@/hooks/use-toast';
 

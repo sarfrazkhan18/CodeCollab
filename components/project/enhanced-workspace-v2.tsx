@@ -2,11 +2,31 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { CodeIcon, PanelLeftIcon, PanelRightIcon, PlayIcon, SaveIcon, GitBranchIcon, TerminalIcon, SparklesIcon, MonitorIcon, SettingsIcon, BrainCircuitIcon, UsersIcon, RocketIcon, BookTemplateIcon as TemplateIcon } from 'lucide-react';
+import { 
+  CodeIcon, 
+  PanelLeftIcon, 
+  PanelRightIcon, 
+  PlayIcon, 
+  SaveIcon, 
+  GitBranchIcon, 
+  TerminalIcon, 
+  SparklesIcon, 
+  MonitorIcon, 
+  SettingsIcon, 
+  BrainCircuitIcon, 
+  UsersIcon, 
+  RocketIcon, 
+  BookTemplateIcon as TemplateIcon,
+  FolderIcon,
+  SearchIcon,
+  MoreHorizontalIcon,
+  ChevronDownIcon
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from '@/components/ui/resizable';
+import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useToast } from '@/hooks/use-toast';
 
@@ -47,13 +67,13 @@ export function EnhancedWorkspaceV2({ projectId }: EnhancedWorkspaceV2Props) {
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [leftPanelTab, setLeftPanelTab] = useState('files');
-  const [rightPanelTab, setRightPanelTab] = useState('intelligence');
+  const [rightPanelTab, setRightPanelTab] = useState('preview');
   const [projectFiles, setProjectFiles] = useState<Record<string, string>>({});
   const [showTemplateGallery, setShowTemplateGallery] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
-  // Mock user data - in production this would come from auth
+  // Mock user data
   const userId = 'user-123';
   const userName = 'John Doe';
 
@@ -69,7 +89,7 @@ export function EnhancedWorkspaceV2({ projectId }: EnhancedWorkspaceV2Props) {
       const storedProjects = JSON.parse(localStorage.getItem('codecollab_projects') || '[]');
       let foundProject = storedProjects.find((p: Project) => p.id === projectId);
       
-      // If not found in localStorage, check for demo projects
+      // Demo projects
       if (!foundProject) {
         const demoProjects = {
           'demo-instagram': {
@@ -184,190 +204,10 @@ export function EnhancedWorkspaceV2({ projectId }: EnhancedWorkspaceV2Props) {
           'postcss': '^8.4.0'
         }
       }, null, 2),
-      'README.md': `# ${project.name}
-
-${project.description}
-
-## Getting Started
-
-\`\`\`bash
-npm run dev
-\`\`\`
-
-Open [http://localhost:3000](http://localhost:3000) to view the application.
-
-## Features
-
-- ⚡ Next.js 14 with App Router
-- 🎨 Tailwind CSS for styling
-- 📝 TypeScript for type safety
-- 🤖 AI-powered development with CodeCollab AI
-
-## Tech Stack
-
-- Framework: ${project.framework}
-- Language: TypeScript
-- Styling: Tailwind CSS
-- Deployment: Ready for Vercel/Netlify
-`,
-      'app/page.tsx': `export default function HomePage() {
-  return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
-            ${project.name}
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            ${project.description}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
-              Get Started
-            </button>
-            <button className="border border-gray-300 hover:border-gray-400 text-gray-700 dark:text-gray-300 font-semibold py-3 px-6 rounded-lg transition-colors">
-              Learn More
-            </button>
-          </div>
-        </div>
-        
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">🚀 Fast Development</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Build faster with AI-powered code generation and intelligent suggestions.
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">🤝 Collaboration</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Work together in real-time with live cursors and instant updates.
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">📦 Ready to Deploy</h3>
-            <p className="text-gray-600 dark:text-gray-300">
-              Deploy instantly to Vercel, Netlify, or your preferred platform.
-            </p>
-          </div>
-        </div>
-      </div>
-    </main>
-  );
-}`,
-      'app/layout.tsx': `import './globals.css'
-import type { Metadata } from 'next'
-
-export const metadata: Metadata = {
-  title: '${project.name}',
-  description: '${project.description}',
-}
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  )
-}`,
-      'app/globals.css': `@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-:root {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 3.9%;
-  --primary: 0 0% 9%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 0 0% 96.1%;
-  --secondary-foreground: 0 0% 9%;
-  --muted: 0 0% 96.1%;
-  --muted-foreground: 0 0% 45.1%;
-  --accent: 0 0% 96.1%;
-  --accent-foreground: 0 0% 9%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 89.8%;
-  --input: 0 0% 89.8%;
-  --ring: 0 0% 3.9%;
-  --radius: 0.5rem;
-}
-
-.dark {
-  --background: 0 0% 3.9%;
-  --foreground: 0 0% 98%;
-  --primary: 0 0% 98%;
-  --primary-foreground: 0 0% 9%;
-  --secondary: 0 0% 14.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 0 0% 14.9%;
-  --muted-foreground: 0 0% 63.9%;
-  --accent: 0 0% 14.9%;
-  --accent-foreground: 0 0% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 14.9%;
-  --input: 0 0% 14.9%;
-  --ring: 0 0% 83.1%;
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}`,
-      'tailwind.config.js': `/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    extend: {
-      colors: {
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
-        primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
-        },
-        secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-      },
-      borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-      },
-    },
-  },
-  plugins: [],
-}`
+      'README.md': `# ${project.name}\n\n${project.description}\n\n## Getting Started\n\n\`\`\`bash\nnpm run dev\n\`\`\`\n\nOpen [http://localhost:3000](http://localhost:3000) to view the application.`,
+      'app/page.tsx': `export default function HomePage() {\n  return (\n    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">\n      <div className="container mx-auto px-4 py-16">\n        <div className="text-center">\n          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">\n            ${project.name}\n          </h1>\n          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">\n            ${project.description}\n          </p>\n        </div>\n      </div>\n    </main>\n  );\n}`,
+      'app/layout.tsx': `import './globals.css'\nimport type { Metadata } from 'next'\n\nexport const metadata: Metadata = {\n  title: '${project.name}',\n  description: '${project.description}',\n}\n\nexport default function RootLayout({\n  children,\n}: {\n  children: React.ReactNode\n}) {\n  return (\n    <html lang="en">\n      <body>{children}</body>\n    </html>\n  )\n}`,
+      'app/globals.css': `@tailwind base;\n@tailwind components;\n@tailwind utilities;`
     };
   };
 
@@ -401,7 +241,6 @@ module.exports = {
       setProjectFiles(projectData.files);
       setShowTemplateGallery(false);
       
-      // Select the main file
       const mainFile = Object.keys(projectData.files).find(file => 
         file.includes('App.tsx') || file.includes('index.tsx') || file.includes('main.tsx')
       );
@@ -422,24 +261,6 @@ module.exports = {
     }
   };
 
-  const handleSaveFile = () => {
-    if (currentFile && project) {
-      // Update project in localStorage
-      const storedProjects = JSON.parse(localStorage.getItem('codecollab_projects') || '[]');
-      const updatedProjects = storedProjects.map((p: Project) => 
-        p.id === project.id 
-          ? { ...p, files: projectFiles, updated_at: new Date().toISOString() }
-          : p
-      );
-      localStorage.setItem('codecollab_projects', JSON.stringify(updatedProjects));
-      
-      toast({
-        title: 'File saved',
-        description: `Saved ${currentFile}`,
-      });
-    }
-  };
-
   const handleRunProject = () => {
     setRightPanelTab('preview');
     toast({
@@ -450,9 +271,13 @@ module.exports = {
 
   if (isLoadingProject) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
+      <div className="flex h-screen w-full items-center justify-center bg-background">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+          <div className="loading-dots mb-4">
+            <div style={{'--i': 0} as React.CSSProperties}></div>
+            <div style={{'--i': 1} as React.CSSProperties}></div>
+            <div style={{'--i': 2} as React.CSSProperties}></div>
+          </div>
           <p className="text-muted-foreground">Loading project...</p>
         </div>
       </div>
@@ -461,7 +286,7 @@ module.exports = {
 
   if (!project) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
+      <div className="flex h-screen w-full items-center justify-center bg-background">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">Project not found</h2>
           <p className="text-muted-foreground mb-4">The requested project could not be loaded</p>
@@ -475,8 +300,8 @@ module.exports = {
 
   if (showTemplateGallery) {
     return (
-      <div className="h-screen">
-        <div className="border-b p-4">
+      <div className="h-screen bg-background">
+        <div className="border-b p-4 bg-background">
           <Button
             variant="ghost"
             onClick={() => setShowTemplateGallery(false)}
@@ -491,38 +316,45 @@ module.exports = {
   }
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-screen flex-col bg-background">
       {/* Enhanced Header */}
       <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6">
-        <div className="flex items-center">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => router.push('/dashboard')}
-            className="mr-2"
+            className="text-muted-foreground hover:text-foreground"
           >
             <CodeIcon className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold">{project.name}</h1>
-          <Badge variant="outline" className="ml-2 bg-green-500/10 text-green-500 border-green-500/20">
-            {project.framework}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <h1 className="font-semibold">{project.name}</h1>
+            <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+              <div className="status-dot status-online mr-1"></div>
+              {project.framework}
+            </Badge>
+          </div>
         </div>
         
         <div className="ml-auto flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowTemplateGallery(true)}
-          >
-            <TemplateIcon className="mr-2 h-4 w-4" />
-            Templates
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleSaveFile}>
+          <div className="hidden md:flex items-center gap-1 mr-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowTemplateGallery(true)}
+              className="text-muted-foreground"
+            >
+              <TemplateIcon className="mr-2 h-4 w-4" />
+              Templates
+            </Button>
+          </div>
+          
+          <Button variant="outline" size="sm">
             <SaveIcon className="mr-2 h-4 w-4" />
             Save
           </Button>
-          <Button variant="default" size="sm" onClick={handleRunProject}>
+          <Button size="sm" onClick={handleRunProject}>
             <PlayIcon className="mr-2 h-4 w-4" />
             Run
           </Button>
@@ -533,73 +365,68 @@ module.exports = {
       {/* Enhanced Workspace */}
       <div className="flex-1 overflow-hidden">
         <ResizablePanelGroup direction="horizontal">
-          {/* Enhanced Left Panel */}
+          {/* Left Panel */}
           {showLeftPanel && (
             <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
-              <Tabs value={leftPanelTab} onValueChange={setLeftPanelTab} className="h-full flex flex-col">
-                <div className="border-b p-2">
-                  <TabsList className="grid w-full grid-cols-5">
-                    <TabsTrigger value="files" className="text-xs">
-                      <CodeIcon className="h-4 w-4" />
-                    </TabsTrigger>
-                    <TabsTrigger value="git" className="text-xs">
-                      <GitBranchIcon className="h-4 w-4" />
-                    </TabsTrigger>
-                    <TabsTrigger value="ai" className="text-xs">
-                      <SparklesIcon className="h-4 w-4" />
-                    </TabsTrigger>
-                    <TabsTrigger value="terminal" className="text-xs">
-                      <TerminalIcon className="h-4 w-4" />
-                    </TabsTrigger>
-                    <TabsTrigger value="deploy" className="text-xs">
-                      <RocketIcon className="h-4 w-4" />
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-                
-                <TabsContent value="files" className="flex-1 p-0">
-                  <FileExplorer 
-                    onSelectFile={handleFileSelect} 
-                    files={projectFiles}
-                    currentFile={currentFile}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="git" className="flex-1 p-0">
-                  <GitPanel projectId={project.id} />
-                </TabsContent>
-                
-                <TabsContent value="ai" className="flex-1 p-0">
-                  <EnhancedCodeGeneration 
-                    projectId={project.id} 
-                    onCodeGenerated={handleCodeGenerated}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="terminal" className="flex-1 p-0">
-                  <TerminalPanel projectId={project.id} />
-                </TabsContent>
-                
-                <TabsContent value="deploy" className="flex-1 p-0">
-                  <DeploymentDashboard projectId={project.id} projectName={project.name} />
-                </TabsContent>
-              </Tabs>
+              <div className="h-full border-r bg-background">
+                <Tabs value={leftPanelTab} onValueChange={setLeftPanelTab} className="h-full flex flex-col">
+                  <div className="border-b p-2">
+                    <TabsList className="grid w-full grid-cols-4 h-8">
+                      <TabsTrigger value="files" className="text-xs px-1">
+                        <FolderIcon className="h-3 w-3" />
+                      </TabsTrigger>
+                      <TabsTrigger value="git" className="text-xs px-1">
+                        <GitBranchIcon className="h-3 w-3" />
+                      </TabsTrigger>
+                      <TabsTrigger value="ai" className="text-xs px-1">
+                        <SparklesIcon className="h-3 w-3" />
+                      </TabsTrigger>
+                      <TabsTrigger value="terminal" className="text-xs px-1">
+                        <TerminalIcon className="h-3 w-3" />
+                      </TabsTrigger>
+                    </TabsList>
+                  </div>
+                  
+                  <TabsContent value="files" className="flex-1 p-0 m-0">
+                    <FileExplorer 
+                      onSelectFile={handleFileSelect} 
+                      files={projectFiles}
+                      currentFile={currentFile}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="git" className="flex-1 p-0 m-0">
+                    <GitPanel projectId={project.id} />
+                  </TabsContent>
+                  
+                  <TabsContent value="ai" className="flex-1 p-0 m-0">
+                    <EnhancedCodeGeneration 
+                      projectId={project.id} 
+                      onCodeGenerated={handleCodeGenerated}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="terminal" className="flex-1 p-0 m-0">
+                    <TerminalPanel projectId={project.id} />
+                  </TabsContent>
+                </Tabs>
+              </div>
             </ResizablePanel>
           )}
 
           <ResizableHandle withHandle />
 
-          {/* Enhanced Center Panel (Code Editor) */}
+          {/* Center Panel (Code Editor) */}
           <ResizablePanel defaultSize={showRightPanel ? 45 : 75}>
-            <div className="h-full relative">
+            <div className="h-full relative bg-background">
               <div className="absolute left-2 top-1/2 -translate-y-1/2 z-10">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowLeftPanel(!showLeftPanel)}
-                  className="h-8 w-8 rounded-full bg-background shadow-sm border"
+                  className="h-7 w-7 rounded-full bg-background shadow-sm border"
                 >
-                  <PanelLeftIcon className="h-4 w-4" />
+                  <PanelLeftIcon className="h-3 w-3" />
                 </Button>
               </div>
               <div className="absolute right-2 top-1/2 -translate-y-1/2 z-10">
@@ -607,36 +434,37 @@ module.exports = {
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowRightPanel(!showRightPanel)}
-                  className="h-8 w-8 rounded-full bg-background shadow-sm border"
+                  className="h-7 w-7 rounded-full bg-background shadow-sm border"
                 >
-                  <PanelRightIcon className="h-4 w-4" />
+                  <PanelRightIcon className="h-3 w-3" />
                 </Button>
               </div>
               
               {currentFile ? (
-                <CodeEditor 
-                  filePath={currentFile} 
-                  code={currentCode}
-                  onChange={handleCodeChange}
-                />
+                <div className="h-full">
+                  <CodeEditor 
+                    filePath={currentFile} 
+                    code={currentCode}
+                    onChange={handleCodeChange}
+                  />
+                </div>
               ) : (
-                <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-                  <div className="mb-4 rounded-full bg-muted p-3">
-                    <CodeIcon className="h-6 w-6 text-muted-foreground" />
+                <div className="flex h-full flex-col items-center justify-center p-8 text-center bg-muted/20">
+                  <div className="mb-6 rounded-full bg-muted p-4">
+                    <CodeIcon className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h3 className="mb-2 text-xl font-semibold">Welcome to {project.name}</h3>
-                  <p className="mb-6 text-muted-foreground max-w-md">
-                    Select a file from the explorer, generate code with AI, or create a new file to start coding
+                  <h3 className="mb-3 text-xl font-semibold">Welcome to {project.name}</h3>
+                  <p className="mb-8 text-muted-foreground max-w-md leading-relaxed">
+                    Select a file from the explorer, generate code with AI, or choose a template to start coding
                   </p>
-                  <div className="flex gap-2">
-                    <Button onClick={() => setLeftPanelTab('files')}>
+                  <div className="flex gap-3">
+                    <Button onClick={() => setLeftPanelTab('files')} variant="outline">
+                      <FolderIcon className="mr-2 h-4 w-4" />
                       Browse Files
                     </Button>
-                    <Button variant="outline" onClick={() => setLeftPanelTab('ai')}>
+                    <Button onClick={() => setLeftPanelTab('ai')}>
+                      <SparklesIcon className="mr-2 h-4 w-4" />
                       Generate Code
-                    </Button>
-                    <Button variant="outline" onClick={() => setShowTemplateGallery(true)}>
-                      Use Template
                     </Button>
                   </div>
                 </div>
@@ -648,55 +476,53 @@ module.exports = {
             <>
               <ResizableHandle withHandle />
               
-              {/* Enhanced Right Panel */}
+              {/* Right Panel */}
               <ResizablePanel defaultSize={30} minSize={25} maxSize={50}>
-                <Tabs value={rightPanelTab} onValueChange={setRightPanelTab} className="h-full flex flex-col">
-                  <div className="border-b p-2">
-                    <TabsList className="grid w-full grid-cols-4">
-                      <TabsTrigger value="intelligence">
-                        <BrainCircuitIcon className="h-4 w-4 mr-2" />
-                        Intelligence
-                      </TabsTrigger>
-                      <TabsTrigger value="preview">
-                        <MonitorIcon className="h-4 w-4 mr-2" />
-                        Preview
-                      </TabsTrigger>
-                      <TabsTrigger value="agents">
-                        <SparklesIcon className="h-4 w-4 mr-2" />
-                        Agents
-                      </TabsTrigger>
-                      <TabsTrigger value="collab">
-                        <UsersIcon className="h-4 w-4 mr-2" />
-                        Collab
-                      </TabsTrigger>
-                    </TabsList>
-                  </div>
-                  
-                  <TabsContent value="intelligence" className="flex-1 p-0">
-                    <CodeIntelligencePanel 
-                      currentFile={currentFile}
-                      code={currentCode}
-                      language="typescript"
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="preview" className="flex-1 p-0">
-                    <LivePreview projectId={project.id} files={projectFiles} />
-                  </TabsContent>
-                  
-                  <TabsContent value="agents" className="flex-1 p-0">
-                    <AgentPanel projectId={project.id} />
-                  </TabsContent>
-                  
-                  <TabsContent value="collab" className="flex-1 p-0">
-                    <CollaborationPanel 
-                      projectId={project.id}
-                      currentFile={currentFile}
-                      userId={userId}
-                      userName={userName}
-                    />
-                  </TabsContent>
-                </Tabs>
+                <div className="h-full border-l bg-background">
+                  <Tabs value={rightPanelTab} onValueChange={setRightPanelTab} className="h-full flex flex-col">
+                    <div className="border-b p-2">
+                      <TabsList className="grid w-full grid-cols-4 h-8">
+                        <TabsTrigger value="preview" className="text-xs px-1">
+                          <MonitorIcon className="h-3 w-3" />
+                        </TabsTrigger>
+                        <TabsTrigger value="intelligence" className="text-xs px-1">
+                          <BrainCircuitIcon className="h-3 w-3" />
+                        </TabsTrigger>
+                        <TabsTrigger value="agents" className="text-xs px-1">
+                          <SparklesIcon className="h-3 w-3" />
+                        </TabsTrigger>
+                        <TabsTrigger value="collab" className="text-xs px-1">
+                          <UsersIcon className="h-3 w-3" />
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
+                    
+                    <TabsContent value="preview" className="flex-1 p-0 m-0">
+                      <LivePreview projectId={project.id} files={projectFiles} />
+                    </TabsContent>
+                    
+                    <TabsContent value="intelligence" className="flex-1 p-0 m-0">
+                      <CodeIntelligencePanel 
+                        currentFile={currentFile}
+                        code={currentCode}
+                        language="typescript"
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="agents" className="flex-1 p-0 m-0">
+                      <AgentPanel projectId={project.id} />
+                    </TabsContent>
+                    
+                    <TabsContent value="collab" className="flex-1 p-0 m-0">
+                      <CollaborationPanel 
+                        projectId={project.id}
+                        currentFile={currentFile}
+                        userId={userId}
+                        userName={userName}
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </div>
               </ResizablePanel>
             </>
           )}

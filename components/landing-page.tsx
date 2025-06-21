@@ -12,11 +12,7 @@ import {
   UsersIcon, 
   ZapIcon, 
   GithubIcon, 
-  TwitterIcon, 
-  LinkedinIcon, 
-  DiscIcon as DiscordIcon, 
-  ChevronRightIcon, 
-  ArrowRightIcon,
+  PlayIcon,
   SparklesIcon,
   MonitorIcon,
   BookTemplateIcon as TemplateIcon,
@@ -24,43 +20,44 @@ import {
   ShieldIcon,
   GitBranchIcon,
   TerminalIcon,
-  PlayIcon
+  ArrowRightIcon,
+  CheckIcon
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 export function LandingPage() {
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* Modern Sticky Header */}
+    <div className="min-h-screen bg-background">
+      {/* Clean Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-2"
+            className="flex items-center gap-3"
           >
-            <CodeIcon className="h-6 w-6 text-primary" />
-            <span className="font-semibold text-xl">CodeCollab AI</span>
+            <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
+              <CodeIcon className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="font-bold text-lg">CodeCollab AI</h1>
+              <p className="text-xs text-muted-foreground">Developer Platform</p>
+            </div>
           </motion.div>
           
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
             <Link href="#features" className="text-sm font-medium hover:text-primary transition-colors">
               Features
             </Link>
-            <Link href="#agents" className="text-sm font-medium hover:text-primary transition-colors">
-              AI Agents
+            <Link href="#demo" className="text-sm font-medium hover:text-primary transition-colors">
+              Demo
             </Link>
-            <Link href="#showcase" className="text-sm font-medium hover:text-primary transition-colors">
-              Showcase
-            </Link>
-            <Link href="/demo" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
-              <PlayIcon className="h-4 w-4" />
-              Live Demo
+            <Link href="#docs" className="text-sm font-medium hover:text-primary transition-colors">
+              Docs
             </Link>
           </nav>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <ThemeToggle />
             <Link href="/auth/login">
               <Button variant="ghost" size="sm">
@@ -68,90 +65,129 @@ export function LandingPage() {
               </Button>
             </Link>
             <Link href="/auth/signup">
-              <Button size="sm" className="hidden sm:flex">
-                Get Started <ArrowRightIcon className="ml-2 h-4 w-4" />
+              <Button size="sm">
+                Get Started
+                <ArrowRightIcon className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </div>
         </div>
       </header>
 
-      <main className="flex-1">
-        {/* Hero Section */}
-        <section className="py-20 md:py-32 relative overflow-hidden">
-          <div className="container relative z-10">
+      <main>
+        {/* Hero Section - Clean & Developer-focused */}
+        <section className="py-20 md:py-32">
+          <div className="container">
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="max-w-4xl mx-auto text-center"
             >
-              <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-6">
-                Build Software Faster with{' '}
-                <span className="text-primary">AI-Powered Collaboration</span>
+              <div className="mb-6">
+                <Badge variant="outline" className="mb-4">
+                  <SparklesIcon className="w-3 h-3 mr-1" />
+                  AI-Powered Development Platform
+                </Badge>
+              </div>
+              
+              <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+                Build Software{' '}
+                <span className="gradient-text">10x Faster</span>
+                <br />with AI Agents
               </h1>
-              <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Experience the future of coding with intelligent AI agents, real-time collaboration, 
-                code intelligence, and one-click deployment.
+              
+              <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
+                The collaborative coding platform designed by developers, for developers. 
+                Ship production-ready code with AI assistance, real-time collaboration, and one-click deployment.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
                 <Link href="/demo">
-                  <Button size="lg" className="w-full sm:w-auto">
-                    <PlayIcon className="mr-2 h-4 w-4" /> Try Interactive Demo
+                  <Button size="lg" className="px-8">
+                    <PlayIcon className="mr-2 h-4 w-4" />
+                    Try Interactive Demo
                   </Button>
                 </Link>
                 <Link href="/auth/signup">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                    Start Building Free <ChevronRightIcon className="ml-2 h-4 w-4" />
+                  <Button size="lg" variant="outline" className="px-8">
+                    Start Building Free
                   </Button>
                 </Link>
               </div>
               
-              {/* Feature Highlights */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+              {/* Quick Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-2xl mx-auto">
                 {[
-                  { icon: <BrainCircuitIcon className="h-5 w-5" />, text: "AI Code Intelligence" },
-                  { icon: <TemplateIcon className="h-5 w-5" />, text: "Project Templates" },
-                  { icon: <RocketIcon className="h-5 w-5" />, text: "One-Click Deploy" },
-                  { icon: <UsersIcon className="h-5 w-5" />, text: "Real-time Collab" }
-                ].map((item, i) => (
+                  { number: '10x', label: 'Faster Development' },
+                  { number: '5', label: 'AI Specialists' },
+                  { number: '50+', label: 'Project Templates' },
+                  { number: '99.9%', label: 'Uptime' }
+                ].map((stat, i) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 + i * 0.1 }}
-                    className="flex items-center gap-2 text-sm text-muted-foreground"
+                    className="text-center"
                   >
-                    <div className="text-primary">{item.icon}</div>
-                    {item.text}
+                    <div className="text-2xl font-bold text-primary">{stat.number}</div>
+                    <div className="text-sm text-muted-foreground">{stat.label}</div>
                   </motion.div>
                 ))}
               </div>
             </motion.div>
           </div>
-          
-          {/* Background Gradient */}
-          <div className="absolute inset-0 -z-10 bg-[radial-gradient(45rem_50rem_at_top,theme(colors.indigo.100),transparent),radial-gradient(40rem_60rem_at_bottom,theme(colors.indigo.100),transparent)] opacity-20 dark:opacity-[0.15]" />
         </section>
 
-        {/* Advanced Features Section */}
-        <section id="features" className="py-20 bg-muted/50">
+        {/* Core Features - Simplified */}
+        <section id="features" className="py-20 bg-muted/30">
           <div className="container">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-center mb-16"
-            >
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tighter mb-4">
-                Advanced Development Platform
-              </h2>
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold mb-4">Everything You Need to Ship Faster</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Everything you need for modern software development, powered by cutting-edge AI technology
+                Production-ready tools that integrate seamlessly into your development workflow
               </p>
-            </motion.div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {advancedFeatures.map((feature, index) => (
+              {[
+                {
+                  icon: <BrainCircuitIcon className="h-6 w-6" />,
+                  title: 'AI Code Assistant',
+                  description: 'Write, review, and refactor code with specialized AI agents',
+                  features: ['Code generation', 'Bug detection', 'Performance optimization']
+                },
+                {
+                  icon: <UsersIcon className="h-6 w-6" />,
+                  title: 'Real-time Collaboration',
+                  description: 'Work together with live cursors, comments, and shared editing',
+                  features: ['Live cursors', 'Inline comments', 'Conflict resolution']
+                },
+                {
+                  icon: <RocketIcon className="h-6 w-6" />,
+                  title: 'One-click Deploy',
+                  description: 'Deploy to production with automatic configuration',
+                  features: ['Multiple platforms', 'Auto scaling', 'Custom domains']
+                },
+                {
+                  icon: <TemplateIcon className="h-6 w-6" />,
+                  title: 'Project Templates',
+                  description: 'Start with production-ready templates and best practices',
+                  features: ['50+ templates', 'Full-stack apps', 'Modern frameworks']
+                },
+                {
+                  icon: <GitBranchIcon className="h-6 w-6" />,
+                  title: 'Git Integration',
+                  description: 'Visual git interface with smart merge conflict resolution',
+                  features: ['Visual diffs', 'Branch management', 'Smart merging']
+                },
+                {
+                  icon: <MonitorIcon className="h-6 w-6" />,
+                  title: 'Live Preview',
+                  description: 'See changes instantly with hot reload and responsive testing',
+                  features: ['Hot reload', 'Mobile preview', 'Performance metrics']
+                }
+              ].map((feature, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
@@ -159,19 +195,23 @@ export function LandingPage() {
                   transition={{ delay: index * 0.1 }}
                   viewport={{ once: true }}
                 >
-                  <Card className="h-full hover:shadow-lg transition-all duration-300 group">
+                  <Card className="dev-card h-full">
                     <CardHeader>
-                      <div className={`h-12 w-12 rounded-lg bg-gradient-to-r ${feature.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                        {feature.icon}
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg text-primary">
+                          {feature.icon}
+                        </div>
+                        <CardTitle className="text-lg">{feature.title}</CardTitle>
                       </div>
-                      <CardTitle className="text-xl">{feature.title}</CardTitle>
-                      <CardDescription>{feature.description}</CardDescription>
+                      <CardDescription className="text-base leading-relaxed">
+                        {feature.description}
+                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-2">
                         {feature.features.map((item, i) => (
-                          <li key={i} className="flex items-center gap-2 text-sm">
-                            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                          <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <CheckIcon className="h-3 w-3 text-green-500" />
                             {item}
                           </li>
                         ))}
@@ -184,60 +224,65 @@ export function LandingPage() {
           </div>
         </section>
 
-        {/* Showcase Section */}
-        <section id="showcase" className="py-20">
+        {/* Demo Section */}
+        <section id="demo" className="py-20">
           <div className="container">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tighter mb-4">
-                See It In Action
-              </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Watch how CodeCollab AI transforms your development workflow
-              </p>
-            </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div className="space-y-6">
-                <h3 className="text-2xl font-bold">Interactive Demo Experience</h3>
-                <p className="text-muted-foreground">
-                  Try our live demo to experience AI-powered code analysis, intelligent refactoring, 
-                  project templates, and real-time collaboration features.
+              <div>
+                <h3 className="text-3xl font-bold mb-6">See It In Action</h3>
+                <p className="text-lg text-muted-foreground mb-8">
+                  Experience the power of AI-assisted development with our interactive demo. 
+                  No signup required - start coding immediately.
                 </p>
-                <div className="space-y-4">
+                
+                <div className="space-y-4 mb-8">
                   {[
-                    "🧠 AI analyzes your code in real-time",
-                    "🚀 Generate complete projects from templates", 
-                    "⚡ Deploy to production with one click",
-                    "👥 Collaborate with live cursors and comments"
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className="h-2 w-2 rounded-full bg-primary" />
-                      <span>{item}</span>
+                    '🤖 AI analyzes and improves your code in real-time',
+                    '🚀 Generate complete applications from simple descriptions',
+                    '👥 Collaborate with team members using live cursors',
+                    '📦 Deploy to production with zero configuration'
+                  ].map((feature, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className="w-2 h-2 rounded-full bg-primary mt-2" />
+                      <span className="text-muted-foreground">{feature}</span>
                     </div>
                   ))}
                 </div>
+                
                 <Link href="/demo">
-                  <Button size="lg" className="mt-6">
+                  <Button size="lg" className="px-8">
                     <PlayIcon className="mr-2 h-4 w-4" />
-                    Try Interactive Demo
+                    Launch Interactive Demo
                   </Button>
                 </Link>
               </div>
 
               <div className="relative">
-                <div className="bg-card border rounded-xl p-6 shadow-xl">
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="h-3 w-3 rounded-full bg-red-500" />
-                    <div className="h-3 w-3 rounded-full bg-yellow-500" />
-                    <div className="h-3 w-3 rounded-full bg-green-500" />
-                    <span className="ml-2 text-sm text-muted-foreground">CodeCollab AI Demo</span>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-4 font-mono text-sm">
-                    <div className="text-green-400">$ codecollab analyze</div>
-                    <div className="text-blue-400 mt-2">✓ Code quality: 85/100</div>
-                    <div className="text-yellow-400">⚡ Performance: 92/100</div>
-                    <div className="text-purple-400">🔒 Security: 88/100</div>
-                    <div className="text-green-400 mt-2">🚀 Ready for deployment!</div>
+                <div className="glass-effect rounded-xl p-1">
+                  <div className="bg-card rounded-lg overflow-hidden">
+                    {/* Mock Terminal/IDE Interface */}
+                    <div className="bg-muted/50 px-4 py-2 flex items-center gap-2 border-b">
+                      <div className="flex gap-1">
+                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      </div>
+                      <span className="text-sm text-muted-foreground ml-2">CodeCollab AI</span>
+                    </div>
+                    
+                    <div className="p-6 code-font text-sm">
+                      <div className="space-y-2">
+                        <div className="text-green-400">$ codecollab generate --type="dashboard"</div>
+                        <div className="text-blue-400">🤖 AI: Generating React dashboard with charts...</div>
+                        <div className="text-yellow-400">📁 Created: components/Dashboard.tsx</div>
+                        <div className="text-yellow-400">📁 Created: hooks/useAnalytics.ts</div>
+                        <div className="text-yellow-400">📁 Created: styles/dashboard.css</div>
+                        <div className="text-green-400 flex items-center gap-2">
+                          ✅ Ready for deployment
+                          <span className="status-dot status-online"></span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -245,246 +290,86 @@ export function LandingPage() {
           </div>
         </section>
 
-        {/* Agents Section */}
-        <section id="agents" className="py-20 bg-muted/50">
-          <div className="container space-y-16">
-            <div className="text-center space-y-4">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tighter">Meet Your AI Development Team</h2>
-              <p className="text-muted-foreground max-w-[600px] mx-auto">
-                Specialized AI agents that work together to accelerate your development process
-              </p>
+        {/* CTA Section */}
+        <section className="py-20 bg-primary/5">
+          <div className="container text-center">
+            <h2 className="text-3xl font-bold mb-4">Ready to 10x Your Development Speed?</h2>
+            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Join thousands of developers shipping faster with AI-powered collaboration
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/auth/signup">
+                <Button size="lg" className="px-8">
+                  Start Building Free
+                  <ArrowRightIcon className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/demo">
+                <Button size="lg" variant="outline" className="px-8">
+                  <PlayIcon className="mr-2 h-4 w-4" />
+                  Try Demo First
+                </Button>
+              </Link>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {agents.map((agent, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  className="flex gap-4 items-start p-6 bg-card rounded-xl border shadow-sm hover:shadow-md transition-all"
-                >
-                  <div className={`h-12 w-12 rounded-full ${agent.bgColor} flex items-center justify-center text-white font-bold text-lg`}>
-                    {agent.icon}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-semibold mb-2">{agent.name}</h3>
-                    <p className="text-muted-foreground mb-4">{agent.description}</p>
-                    <div className="flex gap-2 flex-wrap">
-                      {agent.skills.map((skill, i) => (
-                        <Badge key={i} variant="secondary" className={agent.skillBg}>
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-20 bg-gradient-to-b from-background to-muted">
-          <div className="container text-center space-y-6">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tighter">
-              Ready to Transform Your Development Workflow?
-            </h2>
-            <p className="text-muted-foreground max-w-[600px] mx-auto">
-              Join thousands of developers building faster with AI-powered collaboration
+            <p className="text-sm text-muted-foreground mt-4">
+              No credit card required • Free forever plan available
             </p>
-            <div className="flex justify-center gap-4 pt-4">
-              <Link href="/demo">
-                <Button size="lg" className="px-8">
-                  <PlayIcon className="mr-2 h-4 w-4" />
-                  Try Demo
-                </Button>
-              </Link>
-              <Link href="/auth/signup">
-                <Button size="lg" variant="outline" className="px-8">
-                  Start Free
-                </Button>
-              </Link>
-            </div>
           </div>
         </section>
       </main>
 
-      {/* Updated Compact Footer */}
-      <footer className="border-t py-8 bg-muted/10">
+      {/* Clean Footer */}
+      <footer className="border-t py-12 bg-muted/30">
         <div className="container">
-          <div className="flex flex-col md:flex-row justify-between gap-8">
-            <div className="md:w-1/3">
-              <div className="flex items-center gap-2 mb-4">
-                <CodeIcon className="h-5 w-5 text-primary" />
-                <span className="font-semibold">CodeCollab AI</span>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
+                  <CodeIcon className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <h3 className="font-bold">CodeCollab AI</h3>
+                  <p className="text-xs text-muted-foreground">Developer Platform</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Building the future of collaborative coding with AI-powered assistance.
+              <p className="text-sm text-muted-foreground mb-4 max-w-md">
+                The collaborative coding platform that empowers developers to build faster with AI assistance.
               </p>
               <div className="flex gap-4">
                 <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  <GithubIcon className="h-4 w-4" />
-                </Link>
-                <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  <TwitterIcon className="h-4 w-4" />
-                </Link>
-                <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  <LinkedinIcon className="h-4 w-4" />
-                </Link>
-                <Link href="#" className="text-muted-foreground hover:text-primary transition-colors">
-                  <DiscordIcon className="h-4 w-4" />
+                  <GithubIcon className="h-5 w-5" />
                 </Link>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-12 text-sm">
-              <div>
-                <h3 className="font-semibold mb-2">Product</h3>
-                <ul className="space-y-1.5">
-                  <li><Link href="#features" className="text-muted-foreground hover:text-primary transition-colors">Features</Link></li>
-                  <li><Link href="#agents" className="text-muted-foreground hover:text-primary transition-colors">AI Agents</Link></li>
-                  <li><Link href="/demo" className="text-muted-foreground hover:text-primary transition-colors">Live Demo</Link></li>
-                  <li><Link href="#" className="text-muted-foreground hover:text-primary transition-colors">Templates</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2">Resources</h3>
-                <ul className="space-y-1.5">
-                  <li><Link href="#" className="text-muted-foreground hover:text-primary transition-colors">Documentation</Link></li>
-                  <li><Link href="#" className="text-muted-foreground hover:text-primary transition-colors">API Reference</Link></li>
-                  <li><Link href="#" className="text-muted-foreground hover:text-primary transition-colors">Blog</Link></li>
-                  <li><Link href="#" className="text-muted-foreground hover:text-primary transition-colors">Status</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2">Company</h3>
-                <ul className="space-y-1.5">
-                  <li><Link href="#" className="text-muted-foreground hover:text-primary transition-colors">About</Link></li>
-                  <li><Link href="#" className="text-muted-foreground hover:text-primary transition-colors">Careers</Link></li>
-                  <li><Link href="#" className="text-muted-foreground hover:text-primary transition-colors">Legal</Link></li>
-                  <li><Link href="#" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link></li>
-                </ul>
-              </div>
+            <div>
+              <h4 className="font-semibold mb-4">Product</h4>
+              <ul className="space-y-2 text-sm">
+                <li><Link href="#features" className="text-muted-foreground hover:text-primary transition-colors">Features</Link></li>
+                <li><Link href="/demo" className="text-muted-foreground hover:text-primary transition-colors">Demo</Link></li>
+                <li><Link href="#" className="text-muted-foreground hover:text-primary transition-colors">Templates</Link></li>
+                <li><Link href="#" className="text-muted-foreground hover:text-primary transition-colors">Pricing</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Resources</h4>
+              <ul className="space-y-2 text-sm">
+                <li><Link href="#" className="text-muted-foreground hover:text-primary transition-colors">Documentation</Link></li>
+                <li><Link href="#" className="text-muted-foreground hover:text-primary transition-colors">API Reference</Link></li>
+                <li><Link href="#" className="text-muted-foreground hover:text-primary transition-colors">Blog</Link></li>
+                <li><Link href="#" className="text-muted-foreground hover:text-primary transition-colors">Support</Link></li>
+              </ul>
             </div>
           </div>
 
-          <div className="mt-8 pt-4 border-t text-center text-sm text-muted-foreground">
-            <p>© {new Date().getFullYear()} CodeCollab AI. All rights reserved.</p>
+          <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
+            <p>© {new Date().getFullYear()} CodeCollab AI. Built for developers, by developers.</p>
           </div>
         </div>
       </footer>
     </div>
   );
 }
-
-const advancedFeatures = [
-  {
-    icon: <BrainCircuitIcon className="h-6 w-6 text-white" />,
-    title: "Code Intelligence",
-    description: "AI-powered code analysis, refactoring, and documentation generation",
-    gradient: "from-blue-500 to-purple-600",
-    features: [
-      "Real-time code quality metrics",
-      "Intelligent refactoring suggestions", 
-      "Auto-generated documentation",
-      "Security vulnerability detection"
-    ]
-  },
-  {
-    icon: <TemplateIcon className="h-6 w-6 text-white" />,
-    title: "Project Templates",
-    description: "Production-ready templates for rapid development",
-    gradient: "from-green-500 to-teal-600",
-    features: [
-      "React, Vue, Angular templates",
-      "Full-stack applications",
-      "AI and blockchain projects",
-      "One-click project setup"
-    ]
-  },
-  {
-    icon: <RocketIcon className="h-6 w-6 text-white" />,
-    title: "Smart Deployment",
-    description: "One-click deployment to multiple platforms",
-    gradient: "from-orange-500 to-red-600",
-    features: [
-      "Vercel, Netlify, AWS support",
-      "Auto-generated configurations",
-      "Environment management",
-      "Custom domain setup"
-    ]
-  },
-  {
-    icon: <UsersIcon className="h-6 w-6 text-white" />,
-    title: "Real-time Collaboration",
-    description: "Live cursors, comments, and team presence",
-    gradient: "from-purple-500 to-pink-600",
-    features: [
-      "Live cursor tracking",
-      "Inline code comments",
-      "Conflict resolution",
-      "Activity feed"
-    ]
-  },
-  {
-    icon: <GitBranchIcon className="h-6 w-6 text-white" />,
-    title: "Git Integration",
-    description: "Seamless version control and collaboration",
-    gradient: "from-indigo-500 to-blue-600",
-    features: [
-      "Visual git interface",
-      "Branch management",
-      "Merge conflict resolution",
-      "Commit history visualization"
-    ]
-  },
-  {
-    icon: <TerminalIcon className="h-6 w-6 text-white" />,
-    title: "Integrated Terminal",
-    description: "Full-featured terminal with command history",
-    gradient: "from-gray-600 to-gray-800",
-    features: [
-      "Multiple terminal sessions",
-      "Command history",
-      "Package management",
-      "Build tool integration"
-    ]
-  }
-];
-
-const agents = [
-  {
-    name: "Frontend Specialist",
-    description: "Crafts beautiful UIs with React, TypeScript, and modern frameworks",
-    icon: "F",
-    bgColor: "bg-[hsl(var(--chart-1))]",
-    skillBg: "bg-[hsl(var(--chart-1))]/20 text-[hsl(var(--chart-1))]",
-    skills: ["React", "TypeScript", "Tailwind", "Next.js"]
-  },
-  {
-    name: "Backend Specialist", 
-    description: "Creates robust APIs and server-side architecture",
-    icon: "B",
-    bgColor: "bg-[hsl(var(--chart-2))]",
-    skillBg: "bg-[hsl(var(--chart-2))]/20 text-[hsl(var(--chart-2))]",
-    skills: ["Node.js", "Python", "FastAPI", "Supabase"]
-  },
-  {
-    name: "Database Specialist",
-    description: "Designs efficient database schemas and optimizes queries",
-    icon: "D", 
-    bgColor: "bg-[hsl(var(--chart-3))]",
-    skillBg: "bg-[hsl(var(--chart-3))]/20 text-[hsl(var(--chart-3))]",
-    skills: ["PostgreSQL", "Schema Design", "Optimization"]
-  },
-  {
-    name: "Testing Specialist",
-    description: "Ensures code quality with comprehensive testing strategies",
-    icon: "T",
-    bgColor: "bg-[hsl(var(--chart-4))]", 
-    skillBg: "bg-[hsl(var(--chart-4))]/20 text-[hsl(var(--chart-4))]",
-    skills: ["Jest", "Cypress", "Unit Testing", "E2E"]
-  }
-];

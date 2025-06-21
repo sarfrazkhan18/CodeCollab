@@ -19,7 +19,9 @@ import {
   GitBranchIcon,
   TerminalIcon,
   MonitorIcon,
-  ZapIcon
+  ZapIcon,
+  StarIcon,
+  ClockIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,7 +50,6 @@ export function EnhancedDashboardShell() {
 
   const handleTemplateSelect = async (template: ProjectTemplate) => {
     try {
-      // Create project from template
       const projectData = await templateService.createProjectFromTemplate(template.id, template.name);
       
       toast({
@@ -56,7 +57,6 @@ export function EnhancedDashboardShell() {
         description: `${template.name} project is ready to use`,
       });
       
-      // Navigate to the new project
       router.push('/project/template-' + template.id);
     } catch (error) {
       toast({
@@ -67,122 +67,80 @@ export function EnhancedDashboardShell() {
     }
   };
 
-  const features = [
-    {
-      title: 'Code Intelligence',
-      description: 'AI-powered code analysis, refactoring, and documentation',
-      icon: <BrainCircuitIcon className="h-6 w-6" />,
-      color: 'from-blue-500 to-purple-600',
-      action: () => {
-        toast({
-          title: 'Code Intelligence',
-          description: 'Available in the workspace - create or open a project to access',
-        });
-        setActiveTab('projects');
-      },
-      features: ['Real-time code analysis', 'Intelligent refactoring', 'Auto documentation', 'Security scanning']
-    },
-    {
-      title: 'Project Templates',
-      description: 'Production-ready templates for rapid development',
-      icon: <TemplateIcon className="h-6 w-6" />,
-      color: 'from-green-500 to-teal-600',
-      action: () => setShowTemplateGallery(true),
-      features: ['React dashboards', 'E-commerce stores', 'AI chatbots', 'Full-stack apps']
-    },
-    {
-      title: 'Smart Deployment',
-      description: 'One-click deployment to Vercel, Netlify, and more',
-      icon: <RocketIcon className="h-6 w-6" />,
-      color: 'from-orange-500 to-red-600',
-      action: () => {
-        toast({
-          title: 'Smart Deployment',
-          description: 'Available in project workspace - deploy with one click',
-        });
-        setActiveTab('projects');
-      },
-      features: ['Auto configuration', 'Multiple providers', 'Custom domains', 'Environment variables']
-    },
-    {
-      title: 'Real-time Collaboration',
-      description: 'Live cursors, comments, and team presence',
-      icon: <UsersIcon className="h-6 w-6" />,
-      color: 'from-purple-500 to-pink-600',
-      action: () => {
-        toast({
-          title: 'Real-time Collaboration',
-          description: 'Available in project workspace - collaborate with your team',
-        });
-        setActiveTab('projects');
-      },
-      features: ['Live cursors', 'Inline comments', 'Team presence', 'Conflict resolution']
-    },
-    {
-      title: 'AI Code Generation',
-      description: 'Generate complete components, functions, and tests',
-      icon: <SparklesIcon className="h-6 w-6" />,
-      color: 'from-indigo-500 to-blue-600',
-      action: () => {
-        toast({
-          title: 'AI Code Generation',
-          description: 'Available in project workspace - generate code with AI',
-        });
-        setActiveTab('projects');
-      },
-      features: ['Component generation', 'Test creation', 'API endpoints', 'Documentation']
-    },
-    {
-      title: 'Git Integration',
-      description: 'Visual git interface with branch management',
-      icon: <GitBranchIcon className="h-6 w-6" />,
-      color: 'from-gray-600 to-gray-800',
-      action: () => {
-        toast({
-          title: 'Git Integration',
-          description: 'Available in project workspace - manage your code with git',
-        });
-        setActiveTab('projects');
-      },
-      features: ['Visual git interface', 'Branch management', 'Merge conflicts', 'Commit history']
-    }
-  ];
-
   const quickActions = [
     {
-      title: 'Try Interactive Demo',
-      description: 'Experience AI-powered coding',
-      icon: <PlayIcon className="h-5 w-5" />,
-      action: () => router.push('/demo'),
-      color: 'bg-blue-500'
-    },
-    {
-      title: 'Browse Templates',
-      description: 'Start with a template',
-      icon: <TemplateIcon className="h-5 w-5" />,
-      action: () => setShowTemplateGallery(true),
-      color: 'bg-green-500'
-    },
-    {
-      title: 'Create Blank Project',
+      title: 'New Project',
       description: 'Start from scratch',
       icon: <PlusIcon className="h-5 w-5" />,
       action: () => setIsCreateDialogOpen(true),
-      color: 'bg-purple-500'
+      color: 'bg-primary text-primary-foreground',
+      shortcut: 'Ctrl+N'
+    },
+    {
+      title: 'Use Template',
+      description: 'Quick start with templates',
+      icon: <TemplateIcon className="h-5 w-5" />,
+      action: () => setShowTemplateGallery(true),
+      color: 'bg-green-500 text-white',
+      shortcut: 'Ctrl+T'
+    },
+    {
+      title: 'Try Demo',
+      description: 'Interactive experience',
+      icon: <PlayIcon className="h-5 w-5" />,
+      action: () => router.push('/demo'),
+      color: 'bg-blue-500 text-white',
+      shortcut: 'Ctrl+D'
+    }
+  ];
+
+  const features = [
+    {
+      title: 'AI Code Assistant',
+      description: 'Get intelligent code suggestions and automated refactoring',
+      icon: <BrainCircuitIcon className="h-5 w-5" />,
+      status: 'Available',
+      color: 'text-green-500'
+    },
+    {
+      title: 'Real-time Collaboration',
+      description: 'Work together with live cursors and comments',
+      icon: <UsersIcon className="h-5 w-5" />,
+      status: 'Available',
+      color: 'text-green-500'
+    },
+    {
+      title: 'One-click Deploy',
+      description: 'Deploy to multiple platforms instantly',
+      icon: <RocketIcon className="h-5 w-5" />,
+      status: 'Available',
+      color: 'text-green-500'
+    },
+    {
+      title: 'Git Integration',
+      description: 'Visual git interface with smart merging',
+      icon: <GitBranchIcon className="h-5 w-5" />,
+      status: 'Available',
+      color: 'text-green-500'
     }
   ];
 
   if (showTemplateGallery) {
     return (
-      <div className="h-screen">
-        <div className="border-b p-4">
-          <Button
-            variant="ghost"
-            onClick={() => setShowTemplateGallery(false)}
-            className="mb-4"
-          >
-            ← Back to Dashboard
-          </Button>
+      <div className="h-screen bg-background">
+        <div className="border-b p-4 bg-background">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              onClick={() => setShowTemplateGallery(false)}
+              className="flex items-center gap-2"
+            >
+              ← Back to Dashboard
+            </Button>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline">50+ Templates</Badge>
+            </div>
+          </div>
         </div>
         <TemplateGallery onSelectTemplate={handleTemplateSelect} />
       </div>
@@ -190,257 +148,232 @@ export function EnhancedDashboardShell() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <div className="hidden md:flex w-64 flex-col bg-card border-r">
-        <div className="flex h-14 items-center border-b px-4">
-          <div className="flex items-center gap-2">
-            <CodeIcon className="h-5 w-5 text-primary" />
-            <span className="font-semibold">CodeCollab AI</span>
-          </div>
-        </div>
-        <div className="flex-1 overflow-auto py-2">
-          <div className="px-3 py-2">
-            <h2 className="px-4 text-lg font-semibold tracking-tight">Dashboard</h2>
-            <div className="space-y-1 py-2">
-              <Button 
-                variant={activeTab === 'projects' ? 'secondary' : 'ghost'} 
-                className="w-full justify-start"
-                onClick={() => setActiveTab('projects')}
-              >
-                <LayoutDashboardIcon className="mr-2 h-4 w-4" />
-                Projects
-              </Button>
-              <Button 
-                variant={activeTab === 'features' ? 'secondary' : 'ghost'} 
-                className="w-full justify-start"
-                onClick={() => setActiveTab('features')}
-              >
-                <SparklesIcon className="mr-2 h-4 w-4" />
-                Features
-              </Button>
-              <Button 
-                variant={activeTab === 'templates' ? 'secondary' : 'ghost'} 
-                className="w-full justify-start"
-                onClick={() => setActiveTab('templates')}
-              >
-                <TemplateIcon className="mr-2 h-4 w-4" />
-                Templates
-              </Button>
-              <Button variant="ghost" className="w-full justify-start" asChild>
-                <div className="flex items-center">
-                  <SettingsIcon className="mr-2 h-4 w-4" />
-                  Settings
-                </div>
-              </Button>
+    <div className="min-h-screen bg-background">
+      {/* Clean Header */}
+      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
+        <div className="flex h-16 items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
+              <CodeIcon className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="font-bold">CodeCollab AI</h1>
+              <p className="text-xs text-muted-foreground">Dashboard</p>
             </div>
           </div>
-        </div>
-        <div className="border-t p-4">
-          <div className="mb-2 text-sm text-muted-foreground">
-            Welcome, {user?.email?.split('@')[0] || 'User'}
-          </div>
-          <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
-            <LogOutIcon className="mr-2 h-4 w-4" />
-            Sign out
-          </Button>
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6">
-          <div className="flex items-center md:hidden">
-            <CodeIcon className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-lg font-semibold md:text-xl">
-              {activeTab === 'projects' && 'Your Projects'}
-              {activeTab === 'features' && 'Platform Features'}
-              {activeTab === 'templates' && 'Project Templates'}
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
+          
+          <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Button size="sm" onClick={() => setIsCreateDialogOpen(true)}>
+            <Button
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="hidden sm:flex"
+            >
               <PlusIcon className="h-4 w-4 mr-2" />
               New Project
             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSignOut}
+              className="text-muted-foreground"
+            >
+              <LogOutIcon className="h-4 w-4" />
+            </Button>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <main className="flex-1 overflow-auto p-4 md:p-6">
-          {activeTab === 'projects' && (
-            <div className="space-y-6">
-              {/* Quick Actions */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {quickActions.map((action, index) => (
-                  <Card 
-                    key={index}
-                    className="cursor-pointer hover:shadow-md transition-all"
-                    onClick={action.action}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${action.color} text-white`}>
-                          {action.icon}
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">{action.title}</h3>
-                          <p className="text-sm text-muted-foreground">{action.description}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {/* Projects List */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold tracking-tight">Recent Projects</h2>
-                  <Button onClick={() => setIsCreateDialogOpen(true)}>
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    New Project
-                  </Button>
-                </div>
-                <ProjectsList />
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'features' && (
-            <div className="space-y-6">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold mb-4">Powerful Development Features</h2>
-                <p className="text-muted-foreground max-w-2xl mx-auto">
-                  Discover the advanced features available in your CodeCollab AI workspace
+      <div className="flex-1">
+        <div className="container max-w-7xl py-8">
+          {/* Welcome Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold">
+                  Welcome back, {user?.email?.split('@')[0] || 'Developer'}
+                </h2>
+                <p className="text-muted-foreground">
+                  Ready to build something amazing? Let's get started.
                 </p>
               </div>
+              <div className="hidden md:flex items-center gap-2">
+                <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                  <div className="status-dot status-online mr-2"></div>
+                  All Systems Operational
+                </Badge>
+              </div>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {features.map((feature, index) => (
-                  <Card 
-                    key={index}
-                    className="hover:shadow-lg transition-all duration-300 group cursor-pointer"
-                    onClick={feature.action}
-                  >
-                    <CardHeader>
-                      <div className={`h-12 w-12 rounded-lg bg-gradient-to-r ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-white`}>
-                        {feature.icon}
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              {quickActions.map((action, index) => (
+                <Card 
+                  key={index}
+                  className="dev-card cursor-pointer group hover:scale-[1.02] transition-all"
+                  onClick={action.action}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-lg ${action.color} group-hover:scale-110 transition-transform`}>
+                        {action.icon}
                       </div>
-                      <CardTitle className="text-xl">{feature.title}</CardTitle>
-                      <CardDescription>{feature.description}</CardDescription>
+                      <div className="flex-1">
+                        <h3 className="font-semibold group-hover:text-primary transition-colors">
+                          {action.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">{action.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1 opacity-60">
+                          {action.shortcut}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3 max-w-md">
+              <TabsTrigger value="projects" className="flex items-center gap-2">
+                <FolderIcon className="h-4 w-4" />
+                Projects
+              </TabsTrigger>
+              <TabsTrigger value="features" className="flex items-center gap-2">
+                <SparklesIcon className="h-4 w-4" />
+                Features
+              </TabsTrigger>
+              <TabsTrigger value="templates" className="flex items-center gap-2">
+                <TemplateIcon className="h-4 w-4" />
+                Templates
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="projects" className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-semibold">Your Projects</h3>
+                  <p className="text-muted-foreground">Manage and access your development projects</p>
+                </div>
+                <Button onClick={() => setIsCreateDialogOpen(true)}>
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  New Project
+                </Button>
+              </div>
+              <ProjectsList />
+            </TabsContent>
+
+            <TabsContent value="features" className="space-y-6">
+              <div>
+                <h3 className="text-xl font-semibold mb-2">Platform Features</h3>
+                <p className="text-muted-foreground">Explore the powerful tools available in your workspace</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {features.map((feature, index) => (
+                  <Card key={index} className="dev-card">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg text-primary">
+                            {feature.icon}
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg">{feature.title}</CardTitle>
+                            <CardDescription>{feature.description}</CardDescription>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className={`${feature.color} border-current/20 bg-current/10`}>
+                          {feature.status}
+                        </Badge>
+                      </div>
                     </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        {feature.features.map((item, i) => (
-                          <li key={i} className="flex items-center gap-2 text-sm">
-                            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
-                      <Button className="w-full mt-4" variant="outline">
-                        <ZapIcon className="h-4 w-4 mr-2" />
-                        Try Feature
-                      </Button>
-                    </CardContent>
                   </Card>
                 ))}
               </div>
 
-              {/* Feature Highlight */}
-              <Card className="bg-gradient-to-r from-blue-500/10 to-purple-600/10 border-blue-200 dark:border-blue-800">
+              <Card className="dev-card bg-gradient-to-r from-primary/5 to-blue-500/5 border-primary/20">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
-                    <div className="p-3 bg-blue-500 rounded-lg text-white">
-                      <BrainCircuitIcon className="h-8 w-8" />
+                    <div className="p-3 bg-primary rounded-lg text-primary-foreground">
+                      <BrainCircuitIcon className="h-6 w-6" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-xl font-bold mb-2">AI-Powered Development</h3>
+                      <h3 className="text-lg font-semibold mb-2">Start Building with AI</h3>
                       <p className="text-muted-foreground mb-4">
-                        Experience the future of coding with intelligent AI agents that understand your code, 
-                        suggest improvements, and help you build faster.
+                        Experience the future of development with intelligent AI agents that understand your code
                       </p>
-                      <div className="flex gap-2">
+                      <div className="flex gap-3">
                         <Button onClick={() => router.push('/demo')}>
                           <PlayIcon className="h-4 w-4 mr-2" />
-                          Try Interactive Demo
+                          Try Demo
                         </Button>
-                        <Button variant="outline" onClick={() => setActiveTab('projects')}>
-                          Start Building
+                        <Button variant="outline" onClick={() => setIsCreateDialogOpen(true)}>
+                          Start Project
                         </Button>
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </div>
-          )}
+            </TabsContent>
 
-          {activeTab === 'templates' && (
-            <div className="space-y-6">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold mb-4">Project Templates</h2>
-                <p className="text-muted-foreground max-w-2xl mx-auto">
-                  Jump-start your development with our curated collection of production-ready templates
-                </p>
+            <TabsContent value="templates" className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-semibold">Project Templates</h3>
+                  <p className="text-muted-foreground">Jump-start your development with production-ready templates</p>
+                </div>
+                <Button variant="outline" onClick={() => setShowTemplateGallery(true)}>
+                  View All Templates
+                </Button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {templateService.getTemplates().slice(0, 6).map((template) => (
                   <Card 
                     key={template.id}
-                    className="hover:shadow-lg transition-all duration-300 cursor-pointer"
+                    className="dev-card cursor-pointer group hover:scale-[1.02] transition-all"
                     onClick={() => handleTemplateSelect(template)}
                   >
                     <div className="relative overflow-hidden rounded-t-lg">
                       <img
                         src={template.thumbnail}
                         alt={template.name}
-                        className="w-full h-48 object-cover hover:scale-105 transition-transform duration-300"
+                        className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      <div className="absolute top-4 right-4">
+                      <div className="absolute top-3 right-3">
                         <Badge variant="outline" className="bg-background/80 backdrop-blur-sm">
                           {template.category}
                         </Badge>
                       </div>
                     </div>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">{template.name}</CardTitle>
-                      <CardDescription className="line-clamp-2">
+                      <CardTitle className="text-base group-hover:text-primary transition-colors">
+                        {template.name}
+                      </CardTitle>
+                      <CardDescription className="text-sm line-clamp-2">
                         {template.description}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {template.tags.slice(0, 3).map((tag) => (
-                          <Badge key={tag} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
+                    <CardContent className="pt-0">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <ClockIcon className="h-3 w-3" />
+                          {template.estimatedTime}
+                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          {template.difficulty}
+                        </Badge>
                       </div>
-                      <Button className="w-full">
-                        Use Template
-                      </Button>
                     </CardContent>
                   </Card>
                 ))}
               </div>
-
-              <div className="text-center">
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  onClick={() => setShowTemplateGallery(true)}
-                >
-                  View All Templates
-                </Button>
-              </div>
-            </div>
-          )}
-        </main>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
 
       <CreateProjectDialog 

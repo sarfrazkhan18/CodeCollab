@@ -13,7 +13,6 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   
-  // Simplified configuration for better compatibility
   async headers() {
     return [
       {
@@ -33,11 +32,18 @@ const nextConfig = {
   },
   
   webpack: (config, { isServer, dev }) => {
-    // Mark isomorphic-git as external for server builds to prevent bundling issues
+    // Handle problematic packages for server builds
     if (isServer) {
       config.externals = config.externals || [];
-      config.externals.push('isomorphic-git');
-      config.externals.push('isomorphic-git/http/web');
+      config.externals.push({
+        'isomorphic-git': 'commonjs isomorphic-git',
+        'isomorphic-git/http/web': 'commonjs isomorphic-git/http/web',
+        '@webcontainer/api': 'commonjs @webcontainer/api',
+        'y-websocket': 'commonjs y-websocket',
+        'y-monaco': 'commonjs y-monaco',
+        'yjs': 'commonjs yjs',
+        'socket.io-client': 'commonjs socket.io-client',
+      });
     }
 
     // Fallback for Node.js modules in browser
@@ -57,7 +63,7 @@ const nextConfig = {
       path: false,
     };
 
-    // Fix module resolution issues
+    // Fix module resolution
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': require('path').resolve(__dirname, './'),

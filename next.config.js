@@ -15,8 +15,25 @@ const nextConfig = {
   experimental: {
     esmExternals: 'loose',
   },
-  // Netlify-specific configuration
-  target: 'server',
+  
+  // Remove problematic configurations for Netlify
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+        ],
+      },
+    ]
+  },
   
   webpack: (config, { isServer, dev }) => {
     // Handle WebContainer and other browser-only dependencies

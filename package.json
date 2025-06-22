@@ -5,9 +5,8 @@
   "scripts": {
     "predev": "node loadenv.js",
     "dev": "next dev -p 3000",
-    "build": "NODE_OPTIONS='--max-old-space-size=4096' next build",
+    "build": "next build",
     "start": "next start -p 3000",
-    "export": "next export",
     "lint": "next lint",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
@@ -64,6 +63,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.0.0",
     "@testing-library/react": "^14.2.1",
     "@types/node": "^20.11.16",
     "@types/react": "^18.2.55",

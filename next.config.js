@@ -7,15 +7,16 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: { 
-    unoptimized: true 
+    unoptimized: true,
+    domains: ['images.pexels.com']
   },
   reactStrictMode: false,
   swcMinify: true,
   experimental: {
     esmExternals: 'loose',
   },
-  // Remove output: 'export' to fix routing issues
-  trailingSlash: true,
+  // Netlify-specific configuration
+  target: 'server',
   
   webpack: (config, { isServer, dev }) => {
     // Handle WebContainer and other browser-only dependencies

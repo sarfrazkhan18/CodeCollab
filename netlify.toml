@@ -5,11 +5,36 @@
 [build.environment]
   NODE_VERSION = "18"
   NPM_VERSION = "8"
+  NEXT_TELEMETRY_DISABLED = "1"
 
+# Essential for Next.js on Netlify
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Handle all routes through Next.js
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/___netlify-handler"
+  status = 200
+  conditions = {Role = ["admin"], Country = ["US"]}
+
+# Fallback for client-side routing
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+# API routes handling
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/___netlify-handler"
+  status = 200
+
+# Static assets
+[[headers]]
+  for = "/_next/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
   for = "/*"
@@ -17,10 +42,3 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-
-[[headers]]
-  for = "/api/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization"

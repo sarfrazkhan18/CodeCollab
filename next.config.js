@@ -10,7 +10,7 @@ const nextConfig = {
     unoptimized: true,
     domains: ['images.pexels.com']
   },
-  reactStrictMode: false,
+  reactStrictMode: true,
   swcMinify: true,
   
   // Simplified configuration for better compatibility
@@ -33,6 +33,13 @@ const nextConfig = {
   },
   
   webpack: (config, { isServer, dev }) => {
+    // Mark isomorphic-git as external for server builds to prevent bundling issues
+    if (isServer) {
+      config.externals = config.externals || [];
+      config.externals.push('isomorphic-git');
+      config.externals.push('isomorphic-git/http/web');
+    }
+
     // Fallback for Node.js modules in browser
     config.resolve.fallback = {
       ...config.resolve.fallback,

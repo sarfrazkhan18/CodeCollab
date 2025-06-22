@@ -1,22 +1,3 @@
-// Conditional imports to avoid build errors
-let WebsocketProvider: any = null;
-let Y: any = null;
-let awareness: any = null;
-
-if (typeof window !== 'undefined') {
-  try {
-    const yWebsocket = require('y-websocket');
-    const yjs = require('yjs');
-    const yProtocols = require('y-protocols/awareness');
-    
-    WebsocketProvider = yWebsocket.WebsocketProvider;
-    Y = yjs;
-    awareness = yProtocols.awareness;
-  } catch (error) {
-    console.warn('Collaboration dependencies not available:', error);
-  }
-}
-
 export interface CollaborationEvent {
   type: 'cursor' | 'selection' | 'edit' | 'presence' | 'comment';
   userId: string;
@@ -56,11 +37,11 @@ export class RealTimeSync {
   private cursors: Map<string, UserCursor> = new Map();
   private comments: Map<string, Comment> = new Map();
   private isConnected: boolean = false;
+  private collaborationModules: any = null;
 
   private constructor() {
-    if (Y) {
-      this.doc = new Y.Doc();
-    }
+    // Initialize empty doc - will be created when modules are loaded
+    this.doc = null;
   }
 
   static getInstance(): RealTimeSync {
@@ -72,11 +53,40 @@ export class RealTimeSync {
 
   async connect(projectId: string, userId: string, userName: string): Promise<void> {
     try {
-      // Check if collaboration dependencies are available
-      if (!WebsocketProvider || !Y || !awareness) {
-        console.warn('Collaboration dependencies not available. Running in offline mode.');
+      // Only attempt to load collaboration modules in browser environment
+      if (typeof window === 'undefined') {
+        console.warn('Collaboration not available in server environment. Running in offline mode.');
         this.simulateOfflineMode(userId, userName);
         return;
+      }
+
+      // Dynamically import collaboration dependencies
+      if (!this.collaborationModules) {
+        try {
+          const [yWebsocket, yjs, yProtocols] = await Promise.all([
+            import('y-websocket').catch(() => null),
+            import('yjs').catch(() => null),
+            import('y-protocols/awareness').catch(() => null)
+          ]);
+
+          if (!yWebsocket || !yjs || !yProtocols) {
+            throw new Error('One or more collaboration modules failed to load');
+          }
+
+          this.collaborationModules = {
+            WebsocketProvider: yWebsocket.WebsocketProvider,
+            Y: yjs,
+            awareness: yProtocols.awareness
+          };
+
+          // Initialize document now that Y is available
+          this.doc = new this.collaborationModules.Y.Doc();
+
+        } catch (error) {
+          console.warn('Collaboration dependencies not available:', error);
+          this.simulateOfflineMode(userId, userName);
+          return;
+        }
       }
 
       // Check if WebSocket URL is configured
@@ -88,7 +98,7 @@ export class RealTimeSync {
       }
 
       // Initialize WebSocket provider
-      this.provider = new WebsocketProvider(
+      this.provider = new this.collaborationModules.WebsocketProvider(
         wsUrl,
         `project-${projectId}`,
         this.doc

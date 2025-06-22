@@ -385,4 +385,23 @@ export class RealTimeSync {
   }
 }
 
-export const realTimeSync = RealTimeSync.getInstance();
+// Create a function to get the realTimeSync instance that's safe for SSR
+function getRealTimeSync(): RealTimeSync {
+  // Only create the instance in browser environment
+  if (typeof window !== 'undefined') {
+    return RealTimeSync.getInstance();
+  }
+  
+  // Return a mock instance for SSR that won't cause errors
+  return new Proxy({} as RealTimeSync, {
+    get(target, prop) {
+      // Return safe no-op functions for all methods
+      if (typeof prop === 'string') {
+        return () => Promise.resolve();
+      }
+      return undefined;
+    }
+  });
+}
+
+export const realTimeSync = getRealTimeSync();

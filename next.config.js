@@ -12,9 +12,6 @@ const nextConfig = {
   },
   reactStrictMode: false,
   swcMinify: true,
-  experimental: {
-    esmExternals: 'loose',
-  },
   
   // Simplified configuration for better compatibility
   async headers() {
@@ -36,18 +33,6 @@ const nextConfig = {
   },
   
   webpack: (config, { isServer, dev }) => {
-    // Handle WebContainer and other browser-only dependencies
-    if (isServer) {
-      config.externals = config.externals || [];
-      config.externals.push({
-        '@webcontainer/api': 'commonjs @webcontainer/api',
-        'y-websocket': 'commonjs y-websocket',
-        'y-monaco': 'commonjs y-monaco',
-        'yjs': 'commonjs yjs',
-        'socket.io-client': 'commonjs socket.io-client',
-      });
-    }
-
     // Fallback for Node.js modules in browser
     config.resolve.fallback = {
       ...config.resolve.fallback,

@@ -14,27 +14,9 @@ const nextConfig = {
   experimental: {
     esmExternals: 'loose',
   },
-  // Configure server options
-  async rewrites() {
-    return []
-  },
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-        ],
-      },
-    ]
-  },
+  // Remove output: 'export' to fix routing issues
+  trailingSlash: true,
+  
   webpack: (config, { isServer, dev }) => {
     // Handle WebContainer and other browser-only dependencies
     if (isServer) {
@@ -70,29 +52,6 @@ const nextConfig = {
       ...config.resolve.alias,
       '@': require('path').resolve(__dirname, './'),
     };
-
-    // Optimize chunks to prevent missing module errors
-    if (!dev && !isServer) {
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            default: {
-              minChunks: 1,
-              priority: -20,
-              reuseExistingChunk: true,
-            },
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              priority: -10,
-              chunks: 'all',
-            },
-          },
-        },
-      };
-    }
 
     return config;
   },

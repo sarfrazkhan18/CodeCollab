@@ -16,7 +16,7 @@ const nextConfig = {
     esmExternals: 'loose',
   },
   
-  // Remove problematic configurations for Netlify
+  // Simplified configuration for better compatibility
   async headers() {
     return [
       {

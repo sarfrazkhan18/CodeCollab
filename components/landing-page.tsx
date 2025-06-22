@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,24 +26,6 @@ import {
 import { ThemeToggle } from '@/components/theme-toggle';
 
 export function LandingPage() {
-  const router = useRouter();
-
-  const handleSignIn = () => {
-    router.push('/auth/login');
-  };
-
-  const handleGetStarted = () => {
-    router.push('/auth/signup');
-  };
-
-  const handleTryDemo = () => {
-    router.push('/demo');
-  };
-
-  const handleViewDashboard = () => {
-    router.push('/dashboard');
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Clean Header */}
@@ -78,13 +59,17 @@ export function LandingPage() {
           
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Button variant="ghost" size="sm" onClick={handleSignIn}>
-              Sign In
-            </Button>
-            <Button size="sm" onClick={handleGetStarted}>
-              Get Started
-              <ArrowRightIcon className="ml-2 h-4 w-4" />
-            </Button>
+            <Link href="/auth/login">
+              <Button variant="ghost" size="sm">
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/auth/signup">
+              <Button size="sm">
+                Get Started
+                <ArrowRightIcon className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -117,13 +102,17 @@ export function LandingPage() {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-                <Button size="lg" className="px-8" onClick={handleTryDemo}>
-                  <PlayIcon className="mr-2 h-4 w-4" />
-                  Try Interactive Demo
-                </Button>
-                <Button size="lg" variant="outline" className="px-8" onClick={handleGetStarted}>
-                  Start Building Free
-                </Button>
+                <Link href="/demo">
+                  <Button size="lg" className="px-8">
+                    <PlayIcon className="mr-2 h-4 w-4" />
+                    Try Interactive Demo
+                  </Button>
+                </Link>
+                <Link href="/auth/signup">
+                  <Button size="lg" variant="outline" className="px-8">
+                    Start Building Free
+                  </Button>
+                </Link>
               </div>
               
               {/* Quick Stats */}
@@ -260,10 +249,12 @@ export function LandingPage() {
                   ))}
                 </div>
                 
-                <Button size="lg" className="px-8" onClick={handleTryDemo}>
-                  <PlayIcon className="mr-2 h-4 w-4" />
-                  Launch Interactive Demo
-                </Button>
+                <Link href="/demo">
+                  <Button size="lg" className="px-8">
+                    <PlayIcon className="mr-2 h-4 w-4" />
+                    Launch Interactive Demo
+                  </Button>
+                </Link>
               </div>
 
               <div className="relative">
@@ -308,14 +299,18 @@ export function LandingPage() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="px-8" onClick={handleGetStarted}>
-                Start Building Free
-                <ArrowRightIcon className="ml-2 h-4 w-4" />
-              </Button>
-              <Button size="lg" variant="outline" className="px-8" onClick={handleTryDemo}>
-                <PlayIcon className="mr-2 h-4 w-4" />
-                Try Demo First
-              </Button>
+              <Link href="/auth/signup">
+                <Button size="lg" className="px-8">
+                  Start Building Free
+                  <ArrowRightIcon className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/demo">
+                <Button size="lg" variant="outline" className="px-8">
+                  <PlayIcon className="mr-2 h-4 w-4" />
+                  Try Demo First
+                </Button>
+              </Link>
             </div>
             
             <p className="text-sm text-muted-foreground mt-4">
@@ -353,7 +348,7 @@ export function LandingPage() {
               <h4 className="font-semibold mb-4">Product</h4>
               <ul className="space-y-2 text-sm">
                 <li><a href="#features" className="text-muted-foreground hover:text-primary transition-colors">Features</a></li>
-                <li><button onClick={handleTryDemo} className="text-muted-foreground hover:text-primary transition-colors">Demo</button></li>
+                <li><Link href="/demo" className="text-muted-foreground hover:text-primary transition-colors">Demo</Link></li>
                 <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">Templates</a></li>
                 <li><a href="#" className="text-muted-foreground hover:text-primary transition-colors">Pricing</a></li>
               </ul>

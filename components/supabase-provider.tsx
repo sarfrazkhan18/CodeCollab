@@ -6,6 +6,11 @@ import { useToast } from '@/hooks/use-toast';
 
 // Create Supabase client with error handling
 const createSupabaseClient = () => {
+  if (typeof window === 'undefined') {
+    // Don't create client on server side
+    return null;
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -53,9 +58,16 @@ export const useSupabase = () => useContext(SupabaseContext);
 export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
     if (!supabase) {
       // Running in demo mode without Supabase
       setLoading(false);
@@ -76,7 +88,7 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     return () => {
       authListener?.subscription.unsubscribe();
     };
-  }, [toast]);
+  }, [isMounted, toast]);
 
   const signIn = async (email: string, password: string) => {
     if (!supabase) {
@@ -178,6 +190,11 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       throw error;
     }
   };
+
+  // Don't render children until mounted on client
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <SupabaseContext.Provider value={{ user, signIn, signUp, signInWithGoogle, signOut, loading }}>

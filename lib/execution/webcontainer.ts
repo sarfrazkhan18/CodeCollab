@@ -19,6 +19,8 @@ export class WebContainerService {
   private serverProcess: any = null;
   private serverUrl: string | null = null;
   private isAvailable = false;
+  private activeTimeouts: Set<NodeJS.Timeout> = new Set();
+  private activeProcesses: Set<any> = new Set();
 
   private constructor() {
     this.checkAvailability();
@@ -46,6 +48,29 @@ export class WebContainerService {
     }
   }
 
+  private createSafeTimeout(callback: () => void, delay: number): NodeJS.Timeout {
+    const timeoutId = setTimeout(() => {
+      this.activeTimeouts.delete(timeoutId);
+      try {
+        callback();
+      } catch (error) {
+        console.error('Timeout callback error:', error);
+      }
+    }, delay);
+    this.activeTimeouts.add(timeoutId);
+    return timeoutId;
+  }
+
+  private clearSafeTimeout(timeoutId: NodeJS.Timeout): void {
+    clearTimeout(timeoutId);
+    this.activeTimeouts.delete(timeoutId);
+  }
+
+  private clearAllTimeouts(): void {
+    this.activeTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    this.activeTimeouts.clear();
+  }
+
   async initialize(): Promise<any> {
     if (!this.isAvailable || !WebContainer) {
       throw new Error('WebContainer is not available in this environment');
@@ -56,11 +81,23 @@ export class WebContainerService {
     }
 
     if (this.isBooting) {
-      // Wait for existing boot process
-      while (this.isBooting) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-      return this.webcontainer;
+      // Wait for existing boot process with proper timeout handling
+      return new Promise((resolve, reject) => {
+        const checkInterval = 100;
+        const maxWait = 30000; // 30 seconds
+        let elapsed = 0;
+
+        const intervalId = setInterval(() => {
+          elapsed += checkInterval;
+          if (!this.isBooting && this.webcontainer) {
+            clearInterval(intervalId);
+            resolve(this.webcontainer);
+          } else if (elapsed >= maxWait) {
+            clearInterval(intervalId);
+            reject(new Error('WebContainer boot timeout'));
+          }
+        }, checkInterval);
+      });
     }
 
     try {
@@ -151,26 +188,49 @@ export class WebContainerService {
     if (!container) return;
     
     const installProcess = await container.spawn('npm', ['install']);
+    this.activeProcesses.add(installProcess);
     
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('Dependency installation timeout'));
+      let isResolved = false;
+      
+      const timeoutId = this.createSafeTimeout(() => {
+        if (!isResolved) {
+          isResolved = true;
+          this.activeProcesses.delete(installProcess);
+          reject(new Error('Dependency installation timeout'));
+        }
       }, 60000); // 1 minute timeout
 
       if (installProcess.output && installProcess.output.pipeTo) {
-        installProcess.output.pipeTo(new WritableStream({
-          write(data: string) {
-            console.log('npm install:', data);
-          }
-        }));
+        try {
+          installProcess.output.pipeTo(new WritableStream({
+            write(data: string) {
+              console.log('npm install:', data);
+            }
+          }));
+        } catch (error) {
+          console.warn('Failed to pipe install output:', error);
+        }
       }
 
       installProcess.exit.then((code: number) => {
-        clearTimeout(timeout);
-        if (code === 0) {
-          resolve();
-        } else {
-          reject(new Error(`npm install failed with code ${code}`));
+        if (!isResolved) {
+          isResolved = true;
+          this.clearSafeTimeout(timeoutId);
+          this.activeProcesses.delete(installProcess);
+          
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`npm install failed with code ${code}`));
+          }
+        }
+      }).catch((error: any) => {
+        if (!isResolved) {
+          isResolved = true;
+          this.clearSafeTimeout(timeoutId);
+          this.activeProcesses.delete(installProcess);
+          reject(new Error(`npm install process error: ${error}`));
         }
       });
     });
@@ -191,50 +251,78 @@ export class WebContainerService {
     try {
       // Kill existing server process if any
       if (this.serverProcess) {
-        this.serverProcess.kill();
+        this.activeProcesses.delete(this.serverProcess);
+        try {
+          this.serverProcess.kill();
+        } catch (error) {
+          console.warn('Failed to kill existing server process:', error);
+        }
       }
 
       // Start the development server
       this.serverProcess = await container.spawn('npm', ['run', 'dev']);
+      this.activeProcesses.add(this.serverProcess);
       
       // Wait for server to be ready and get the URL
       return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('Server startup timeout'));
+        let isResolved = false;
+        
+        const timeoutId = this.createSafeTimeout(() => {
+          if (!isResolved) {
+            isResolved = true;
+            reject(new Error('Server startup timeout'));
+          }
         }, 30000); // 30 second timeout
 
         if (container.on) {
           container.on('server-ready', (port: number, url: string) => {
-            clearTimeout(timeout);
-            this.serverUrl = url;
-            console.log(`Development server ready at ${url}`);
-            resolve(url);
+            if (!isResolved) {
+              isResolved = true;
+              this.clearSafeTimeout(timeoutId);
+              this.serverUrl = url;
+              console.log(`Development server ready at ${url}`);
+              resolve(url);
+            }
           });
         }
 
         // Listen for process output to detect when server is ready
         if (this.serverProcess.output && this.serverProcess.output.pipeTo) {
-          this.serverProcess.output.pipeTo(new WritableStream({
-            write(data: string) {
-              console.log('Server output:', data);
-              // Look for Next.js ready message
-              if (data.includes('Ready') || data.includes('localhost:3000')) {
-                clearTimeout(timeout);
-                const url = 'http://localhost:3000';
-                this.serverUrl = url;
-                resolve(url);
+          try {
+            this.serverProcess.output.pipeTo(new WritableStream({
+              write: (data: string) => {
+                console.log('Server output:', data);
+                // Look for Next.js ready message
+                if (!isResolved && (data.includes('Ready') || data.includes('localhost:3000'))) {
+                  isResolved = true;
+                  this.clearSafeTimeout(timeoutId);
+                  const url = 'http://localhost:3000';
+                  this.serverUrl = url;
+                  resolve(url);
+                }
               }
-            }
-          }));
+            }));
+          } catch (error) {
+            console.warn('Failed to pipe server output:', error);
+          }
         }
 
         // Handle process exit
-        this.serverProcess.exit.then((code: number) => {
-          if (code !== 0) {
-            clearTimeout(timeout);
-            reject(new Error(`Development server exited with code ${code}`));
-          }
-        });
+        if (this.serverProcess.exit) {
+          this.serverProcess.exit.then((code: number) => {
+            if (!isResolved && code !== 0) {
+              isResolved = true;
+              this.clearSafeTimeout(timeoutId);
+              reject(new Error(`Development server exited with code ${code}`));
+            }
+          }).catch((error: any) => {
+            if (!isResolved) {
+              isResolved = true;
+              this.clearSafeTimeout(timeoutId);
+              reject(new Error(`Development server process error: ${error}`));
+            }
+          });
+        }
       });
     } catch (error) {
       throw new Error(`Failed to start development server: ${error}`);
@@ -262,19 +350,30 @@ export class WebContainerService {
     }
     
     const process = await container.spawn(command, args);
+    this.activeProcesses.add(process);
     
     let output = '';
     
     if (process.output && process.output.pipeTo) {
-      process.output.pipeTo(new WritableStream({
-        write(data: string) {
-          output += data;
-        }
-      }));
+      try {
+        process.output.pipeTo(new WritableStream({
+          write(data: string) {
+            output += data;
+          }
+        }));
+      } catch (error) {
+        console.warn('Failed to pipe command output:', error);
+      }
     }
 
-    const exitCode = await process.exit;
-    return { output, exitCode };
+    try {
+      const exitCode = await process.exit;
+      this.activeProcesses.delete(process);
+      return { output, exitCode };
+    } catch (error) {
+      this.activeProcesses.delete(process);
+      throw error;
+    }
   }
 
   getContainer(): any {
@@ -287,10 +386,35 @@ export class WebContainerService {
 
   async stopServer(): Promise<void> {
     if (this.serverProcess) {
-      this.serverProcess.kill();
+      this.activeProcesses.delete(this.serverProcess);
+      try {
+        this.serverProcess.kill();
+      } catch (error) {
+        console.warn('Failed to stop server process:', error);
+      }
       this.serverProcess = null;
       this.serverUrl = null;
     }
+  }
+
+  async cleanup(): Promise<void> {
+    // Clear all timeouts
+    this.clearAllTimeouts();
+    
+    // Stop all active processes
+    for (const process of this.activeProcesses) {
+      try {
+        if (process && process.kill) {
+          process.kill();
+        }
+      } catch (error) {
+        console.warn('Failed to kill process during cleanup:', error);
+      }
+    }
+    this.activeProcesses.clear();
+    
+    // Stop server
+    await this.stopServer();
   }
 
   isWebContainerAvailable(): boolean {
@@ -299,3 +423,10 @@ export class WebContainerService {
 }
 
 export const webContainerService = WebContainerService.getInstance();
+
+// Cleanup on page unload
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    webContainerService.cleanup();
+  });
+}

@@ -4,7 +4,6 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { Analytics } from '@/components/analytics';
 import { SupabaseProvider } from '@/components/supabase-provider';
-import { ErrorBoundary } from '@/components/error-boundary';
 
 export const metadata: Metadata = {
   title: 'CodeCollab AI',
@@ -19,11 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <SupabaseProvider>
-            <ErrorBoundary>
-              {children}
-            </ErrorBoundary>
+            {children}
             <Toaster />
             <Analytics />
           </SupabaseProvider>

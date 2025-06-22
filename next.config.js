@@ -10,9 +10,13 @@ const nextConfig = {
     unoptimized: true,
     domains: ['images.pexels.com']
   },
-  reactStrictMode: true,
+  reactStrictMode: false,
   swcMinify: true,
+  experimental: {
+    esmExternals: 'loose',
+  },
   
+  // Simplified configuration for better compatibility
   async headers() {
     return [
       {
@@ -32,12 +36,10 @@ const nextConfig = {
   },
   
   webpack: (config, { isServer, dev }) => {
-    // Handle problematic packages for server builds
+    // Handle WebContainer and other browser-only dependencies
     if (isServer) {
       config.externals = config.externals || [];
       config.externals.push({
-        'isomorphic-git': 'commonjs isomorphic-git',
-        'isomorphic-git/http/web': 'commonjs isomorphic-git/http/web',
         '@webcontainer/api': 'commonjs @webcontainer/api',
         'y-websocket': 'commonjs y-websocket',
         'y-monaco': 'commonjs y-monaco',
@@ -63,7 +65,7 @@ const nextConfig = {
       path: false,
     };
 
-    // Fix module resolution
+    // Fix module resolution issues
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': require('path').resolve(__dirname, './'),

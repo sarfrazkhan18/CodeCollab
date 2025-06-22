@@ -50,6 +50,7 @@ import { AgentPanel } from '@/components/project/agent-panel';
 import { LivePreview } from '@/components/project/live-preview';
 import { EnhancedCodeGeneration } from '@/components/project/enhanced-code-generation';
 import { CodeIntelligencePanel } from '@/components/intelligence/code-intelligence-panel';
+import { EnhancedGitPanel } from '@/components/project/enhanced-git-panel';
 
 interface AgenticCanvasProps {
   projectId: string;
@@ -60,6 +61,9 @@ interface AgenticCanvasProps {
   onFileSelect: (filePath: string) => void;
   onCodeChange: (code: string) => void;
   onCodeGenerated: (code: string, filePath: string) => void;
+  onFileCreated?: (filePath: string, content: string) => void;
+  onFileDeleted?: (filePath: string) => void;
+  onFileRenamed?: (oldPath: string, newPath: string) => void;
 }
 
 interface AIContextSuggestion {
@@ -88,7 +92,10 @@ export function AgenticCanvas({
   currentCode, 
   onFileSelect, 
   onCodeChange, 
-  onCodeGenerated 
+  onCodeGenerated,
+  onFileCreated,
+  onFileDeleted,
+  onFileRenamed
 }: AgenticCanvasProps) {
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
@@ -290,7 +297,7 @@ export function AgenticCanvas({
         setRightPanelTab('intelligence');
         break;
       case 'collaborate':
-        setLeftPanelTab('files');
+        setLeftPanelTab('git');
         setRightPanelTab('collab');
         break;
     }
@@ -432,6 +439,9 @@ export function AgenticCanvas({
                       onSelectFile={onFileSelect} 
                       files={projectFiles}
                       currentFile={currentFile}
+                      onFileCreated={onFileCreated}
+                      onFileDeleted={onFileDeleted}
+                      onFileRenamed={onFileRenamed}
                     />
                   </TabsContent>
                   
@@ -443,9 +453,13 @@ export function AgenticCanvas({
                   </TabsContent>
                   
                   <TabsContent value="git" className="flex-1 p-0 m-0">
-                    <div className="p-4 text-sm text-muted-foreground">
-                      Git integration coming soon
-                    </div>
+                    <EnhancedGitPanel 
+                      projectId={projectId}
+                      onFileChange={(files) => {
+                        // Handle file change notifications from Git
+                        console.log('Git files changed:', files);
+                      }}
+                    />
                   </TabsContent>
                   
                   <TabsContent value="terminal" className="flex-1 p-0 m-0">

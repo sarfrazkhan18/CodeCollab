@@ -86,9 +86,9 @@
     "socket.io": "^4.7.4",
     "socket.io-client": "^4.7.4",
     "y-monaco": "^0.1.5",
-    "y-websocket": "^1.5.4",
-    "yjs": "^13.6.14",
     "y-presence": "^0.2.3",
-    "y-protocols": "^1.0.6"
+    "y-protocols": "^1.0.6",
+    "y-websocket": "^1.5.4",
+    "yjs": "^13.6.14"
   }
 }

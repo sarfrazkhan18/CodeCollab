@@ -13,32 +13,35 @@ A collaborative coding platform powered by AI agents with real-time collaboratio
 
 ## Getting Started
 
-### 1. Install Dependencies
+### 1. Clone and Install Dependencies
 
 ```bash
+git clone https://github.com/yourusername/codecollab-ai.git
+cd codecollab-ai
 npm install
 ```
 
 ### 2. Environment Configuration
 
-The app works in demo mode by default. To enable full features:
+The app uses Supabase for authentication, database, and real-time features.
 
-1. **For Authentication (Optional):**
-   - Create a Supabase project at [https://supabase.com](https://supabase.com)
-   - Copy your project URL and anon key
-   - Edit `.env.local` with your credentials:
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-   ```
+#### Option 1: Automated Setup (Recommended)
 
-2. **For AI Features (Optional):**
-   - Get API keys from [Anthropic](https://console.anthropic.com) or [Google AI](https://makersuite.google.com)
-   - Add to `.env.local`:
-   ```
-   ANTHROPIC_API_KEY=your-anthropic-key
-   GOOGLE_AI_API_KEY=your-google-ai-key
-   ```
+Run the setup wizard which will guide you through the process:
+
+```bash
+node scripts/setup-local-env.js
+```
+
+#### Option 2: Manual Setup
+
+Create a `.env.local` file with your Supabase credentials:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
 
 ### 3. Start Development Server
 
@@ -47,6 +50,31 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
+
+## Deployment
+
+### GitHub Actions Deployment (Recommended)
+
+This project is configured to deploy automatically using GitHub Actions.
+
+1. Fork this repository
+2. Add the following secrets to your GitHub repository:
+   - `SUPABASE_URL`: Your Supabase project URL
+   - `SUPABASE_ANON_KEY`: Your Supabase anon key
+   - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key
+   - `NETLIFY_AUTH_TOKEN`: Your Netlify personal access token
+   - `NETLIFY_SITE_ID`: Your Netlify site ID
+
+3. Push to the main branch and GitHub Actions will handle deployment
+
+### Manual Deployment to Netlify
+
+1. Set up environment variables in Netlify:
+   - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anon key
+   - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key
+
+2. Deploy the project using the Netlify CLI or dashboard
 
 ## Demo Mode
 
@@ -62,18 +90,18 @@ The app runs in demo mode when Supabase is not configured:
 
 ```
 ├── app/                    # Next.js app router pages
-├── components/            # React components
-│   ├── ui/               # Reusable UI components
-│   ├── auth/             # Authentication components
-│   ├── dashboard/        # Dashboard components
-│   ├── project/          # Project workspace components
-│   └── templates/        # Template gallery
-├── lib/                  # Utility libraries
-│   ├── ai/              # AI agents and services
-│   ├── collaboration/   # Real-time collaboration
-│   ├── deployment/      # Deployment services
-│   └── templates/       # Project templates
-└── public/              # Static assets
+├── components/             # React components
+├── lib/                    # Utility libraries
+│   ├── ai/                 # AI agents and services
+│   ├── collaboration/      # Real-time collaboration
+│   ├── deployment/         # Deployment services
+│   ├── supabase/           # Supabase client and utilities
+│   └── templates/          # Project templates
+├── public/                 # Static assets
+├── scripts/                # Utility scripts
+│   └── setup-local-env.js  # Environment setup wizard
+└── supabase/               # Supabase configuration
+    └── migrations/         # Database migrations
 ```
 
 ## Available Scripts
@@ -83,24 +111,7 @@ The app runs in demo mode when Supabase is not configured:
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
 - `npm run test` - Run tests
-
-## Technologies Used
-
-- **Frontend:** Next.js 14, React 18, TypeScript, Tailwind CSS
-- **UI Components:** Radix UI, shadcn/ui, Lucide React
-- **Authentication:** Supabase Auth
-- **AI Integration:** Anthropic Claude, Google Gemini
-- **Code Editor:** Monaco Editor
-- **Real-time:** WebSockets, Yjs (optional)
-- **Deployment:** Vercel, Netlify support
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+- `node scripts/setup-local-env.js` - Run environment setup wizard
 
 ## License
 
